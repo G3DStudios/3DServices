@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 450px; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden;}
+    .container { width: 100%; max-width: 450px; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; position: relative;}
     
     h1 { text-align: center; color: #222; margin-top: 0; font-size: 24px; }
     p.subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
@@ -26,39 +26,48 @@
     .preview-canvas { text-align: center; margin: 20px 0 30px 0; display: flex; justify-content: center; align-items: center; min-height: 120px; }
 
     .price-tag { text-align: center; font-size: 28px; font-weight: 900; color: #28a745; margin: 10px 0; }
-    .price-note { text-align: center; font-size: 12px; color: #888; margin-bottom: 20px; }
+    .price-note { text-align: center; font-size: 12px; color: #888; margin-bottom: 15px; }
     
-    .action-btn { width: 100%; padding: 15px; background: #222; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s;}
+    .button-group { display: flex; gap: 10px; margin-top: 10px; }
+    .action-btn { flex: 1; padding: 15px; background: #222; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s;}
     .action-btn:hover { background: #444; }
+    .cart-add-btn { flex: 1; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+    .cart-add-btn:hover { background: #0056b3; }
     .back-btn { width: 100%; padding: 12px; background: transparent; color: #666; border: none; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; text-decoration: underline; }
 
-    /* --- FLEXI CART STYLES --- */
-    .toy-card { display: flex; align-items: center; border: 2px solid #eee; border-radius: 12px; padding: 10px; margin-bottom: 12px; transition: border 0.3s; }
-    .toy-card:hover { border-color: #ccc; }
-    .toy-icon { font-size: 35px; margin-right: 15px; background: #f4f7f6; border-radius: 10px; padding: 10px; text-align: center; width: 40px;}
-    .toy-info { flex-grow: 1; }
-    .toy-info strong { display: block; font-size: 16px; color: #333; margin-bottom: 3px;}
-    .toy-info span { font-size: 13px; color: #888; font-weight: bold; }
-    .toy-info select { width: 100%; padding: 6px; margin-top: 8px; font-size: 12px; border-radius: 6px;}
-    .toy-math { text-align: right; display: flex; flex-direction: column; align-items: flex-end;}
-    .toy-qty { width: 60px; padding: 8px; text-align: center; font-weight: bold; border-radius: 8px; border: 2px solid #ccc; margin-bottom: 5px;}
-    .toy-total { font-size: 14px; font-weight: bold; color: #28a745; }
+    .floating-cart { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; width: 60px; height: 60px; border-radius: 30px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; transition: transform 0.2s; }
+    .floating-cart:hover { transform: scale(1.1); }
+    .cart-badge { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; font-size: 12px; font-weight: bold; width: 22px; height: 22px; border-radius: 11px; display: flex; justify-content: center; align-items: center; }
     
+    .cart-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+    .cart-item-info strong { display: block; font-size: 15px; color: #333; }
+    .cart-item-info span { font-size: 12px; color: #777; }
+    .cart-item-price { font-weight: bold; color: #28a745; margin-right: 15px; }
+    .remove-btn { background: #dc3545; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; font-weight: bold;}
+
     .cart-summary { background: #f8fbff; border: 2px solid #cce5ff; padding: 15px; border-radius: 12px; margin-top: 20px; }
     .summary-row { display: flex; justify-content: space-between; font-size: 14px; color: #555; margin-bottom: 8px; font-weight: bold;}
     .summary-total { display: flex; justify-content: space-between; font-size: 20px; color: #222; font-weight: 900; margin-top: 10px; padding-top: 10px; border-top: 2px dashed #cce5ff; }
+
+    .flexi-icon-preview { font-size: 80px; background: #f4f7f6; padding: 15px 25px; border-radius: 20px; border: 4px solid #333; }
   </style>
 </head>
 <body>
 
+  <!-- Floating Cart Button -->
+  <div class="floating-cart" onclick="openCart()">
+    🛒<div class="cart-badge" id="cartBadge">0</div>
+  </div>
+
   <div class="container">
     
+    <!-- MAIN MENU -->
     <div id="mainMenu" class="view active">
       <h1>G3D Studios</h1>
       <p class="subtitle">Local manufacturing & custom CAD.</p>
 
       <button class="menu-btn" onclick="switchView('singleLetterView')">
-        <strong>Single Letter Keychain (₱15)</strong>
+        <strong>Single Letter Tag (₱15)</strong>
         <span>Geometric initial tag. Fast print.</span>
       </button>
 
@@ -69,7 +78,7 @@
 
       <button class="menu-btn" onclick="switchView('flexiView')">
         <strong>Flexi Toys Collection</strong>
-        <span>Articulated fidgets. Build your cart.</span>
+        <span>Articulated fidgets in any color.</span>
       </button>
 
       <button class="menu-btn" onclick="switchView('cadView')">
@@ -78,6 +87,7 @@
       </button>
     </div>
 
+    <!-- SINGLE LETTER VIEW -->
     <div id="singleLetterView" class="view">
       <h1>Single Letter Tag</h1>
       
@@ -111,10 +121,20 @@
       </div>
 
       <p class="price-tag">₱15.00</p>
-      <button class="action-btn" onclick="orderSingle()">Confirm & Prepare GCash</button>
+      
+      <div class="form-group">
+        <label>Your Name:</label>
+        <input type="text" id="singleCustomerName" placeholder="e.g., Juan Dela Cruz">
+      </div>
+
+      <div class="button-group">
+        <button class="cart-add-btn" onclick="addToCart('single')">Add to Cart</button>
+        <button class="action-btn" onclick="orderDirect('single')">Buy Now</button>
+      </div>
       <button class="back-btn" onclick="switchView('mainMenu')">Back to Menu</button>
     </div>
 
+    <!-- FULL NAMEPLATE VIEW -->
     <div id="nameplateView" class="view">
       <h1>Custom Nameplate</h1>
       
@@ -150,79 +170,110 @@
       <p class="price-tag" id="platePrice">₱50.00</p>
       <p class="price-note">Base price (4 letters). +₱15 per extra letter.</p>
 
-      <button class="action-btn" onclick="orderPlate()">Confirm & Prepare GCash</button>
+      <div class="form-group">
+        <label>Your Name:</label>
+        <input type="text" id="plateCustomerName" placeholder="e.g., Juan Dela Cruz">
+      </div>
+
+      <div class="button-group">
+        <button class="cart-add-btn" onclick="addToCart('plate')">Add to Cart</button>
+        <button class="action-btn" onclick="orderDirect('plate')">Buy Now</button>
+      </div>
       <button class="back-btn" onclick="switchView('mainMenu')">Back to Menu</button>
     </div>
 
+    <!-- FLEXI TOYS BUILDER -->
     <div id="flexiView" class="view">
-      <h1>Flexi Toys</h1>
-      <p class="subtitle">Articulated, print-in-place fidgets.</p>
+      <h1>Flexi Toy Builder</h1>
+      <p class="subtitle">Mix and match models and colors.</p>
       
-      <div class="toy-card">
-        <div class="toy-icon">🦖</div>
-        <div class="toy-info">
-          <strong>Flexi Rex</strong>
-          <span>₱50.00 / ea</span>
-          <select id="colorRex">
-            <option>Red</option><option>Black</option><option>Blue</option>
-          </select>
-        </div>
-        <div class="toy-math">
-          <input type="number" class="toy-qty" id="qtyRex" value="0" min="0" oninput="updateCart()">
-          <div class="toy-total" id="totalRex">₱0</div>
-        </div>
+      <div class="preview-canvas">
+        <div class="flexi-icon-preview" id="flexiPreviewIcon">🦖</div>
       </div>
 
-      <div class="toy-card">
-        <div class="toy-icon">🐙</div>
-        <div class="toy-info">
-          <strong>Flexi Octopus</strong>
-          <span>₱60.00 / ea</span>
-          <select id="colorOcto">
-            <option>Blue</option><option>Red</option><option>Black</option>
-          </select>
-        </div>
-        <div class="toy-math">
-          <input type="number" class="toy-qty" id="qtyOcto" value="0" min="0" oninput="updateCart()">
-          <div class="toy-total" id="totalOcto">₱0</div>
-        </div>
-      </div>
-
-      <div class="toy-card">
-        <div class="toy-icon">🦈</div>
-        <div class="toy-info">
-          <strong>Articulated Shark</strong>
-          <span>₱55.00 / ea</span>
-          <select id="colorShark">
-            <option>Black</option><option>Blue</option><option>Red</option>
-          </select>
-        </div>
-        <div class="toy-math">
-          <input type="number" class="toy-qty" id="qtyShark" value="0" min="0" oninput="updateCart()">
-          <div class="toy-total" id="totalShark">₱0</div>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-top: 20px;">
-        <label>Fulfillment Method:</label>
-        <select id="deliveryOption" onchange="updateCart()" style="border-color: #007bff;">
-          <option value="walkin">Walk-in / Campus Pick-up (Free)</option>
-          <option value="deliver">Local Delivery (+₱15.00)</option>
+      <div class="form-group">
+        <label>Select Toy Model:</label>
+        <select id="flexiModel" onchange="updateFlexiPreview()">
+          <option value="50">Flexi Rex (₱50)</option>
+          <option value="60">Flexi Octopus (₱60)</option>
+          <option value="55">Articulated Shark (₱55)</option>
         </select>
       </div>
 
-      <div class="cart-summary">
-        <div class="summary-row"><span>Items Subtotal:</span> <span id="cartSubtotal">₱0.00</span></div>
-        <div class="summary-row"><span>Delivery Fee:</span> <span id="cartFee">₱0.00</span></div>
-        <div class="summary-total"><span>TOTAL:</span> <span id="cartTotal" style="color: #28a745;">₱0.00</span></div>
+      <div class="form-group">
+        <label>Select Color:</label>
+        <select id="flexiColor">
+          <option>Crimson Red</option>
+          <option>Solid Black</option>
+          <option>DodgerBlue</option>
+          <option>Gold</option>
+        </select>
       </div>
 
-      <button class="action-btn" onclick="orderFlexiCart()">Checkout via GCash</button>
+      <div class="form-group">
+        <label>Quantity:</label>
+        <input type="number" id="flexiQty" value="1" min="1" oninput="updateFlexiPreview()">
+      </div>
+
+      <p class="price-tag" id="flexiPriceDisplay">₱50.00</p>
+      
+      <div class="form-group">
+        <label>Your Name:</label>
+        <input type="text" id="flexiCustomerName" placeholder="e.g., Juan Dela Cruz">
+      </div>
+
+      <div class="button-group">
+        <button class="cart-add-btn" onclick="addToCart('flexi')">Add to Cart</button>
+        <button class="action-btn" onclick="orderDirect('flexi')">Buy Now</button>
+      </div>
       <button class="back-btn" onclick="switchView('mainMenu')">Back to Menu</button>
     </div>
 
+    <!-- MASTER CART VIEW -->
+    <div id="cartView" class="view">
+      <h1>Your Cart</h1>
+      
+      <div id="cartItemsContainer" style="margin-bottom: 20px;">
+        <!-- Cart items injected via JS -->
+      </div>
+
+      <div class="form-group">
+        <label style="color: #007bff;">Your Full Name:</label>
+        <input type="text" id="cartCustomerName" placeholder="Required for your order...">
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label>Fulfillment Method:</label>
+        <select id="cartDeliveryOption" onchange="renderCart()" style="border-color: #007bff;">
+          <option value="0">Walk-in / Campus Pick-up (LSPU-SCC) - Free</option>
+          <option value="15">Delivery: Santa Maria Proper (+₱15.00)</option>
+          <option value="30">Delivery: Nearby Barangays (+₱30.00)</option>
+          <option value="50">Delivery: Outside Area (+₱50.00)</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="addressGroup" style="display: none;">
+        <label style="color: #dc3545;">Delivery Address / Meetup Point:</label>
+        <textarea id="deliveryAddress" rows="3" placeholder="Please provide your complete address..."></textarea>
+      </div>
+
+      <div class="cart-summary">
+        <div class="summary-row"><span>Items Subtotal:</span> <span id="masterSubtotal">₱0.00</span></div>
+        <div class="summary-row"><span>Delivery Fee:</span> <span id="masterFee">₱0.00</span></div>
+        <div class="summary-total"><span>TOTAL:</span> <span id="masterTotal" style="color: #28a745;">₱0.00</span></div>
+      </div>
+
+      <button class="action-btn" onclick="checkoutMasterCart()" style="background: #28a745; margin-top:20px;">Checkout & Upload Receipt</button>
+      <button class="back-btn" onclick="switchView('mainMenu')">Continue Shopping</button>
+    </div>
+
+    <!-- CAD SERVICE VIEW -->
     <div id="cadView" class="view">
       <h1>Engineering & CAD</h1>
+      <div class="form-group">
+        <label>Your Name:</label>
+        <input type="text" id="cadName" placeholder="e.g., Juan Dela Cruz">
+      </div>
       <div class="form-group">
         <label>Describe the part (Measurements, purpose):</label>
         <textarea id="cadDesc" rows="5" placeholder="I need a custom electronics enclosure..."></textarea>
@@ -234,12 +285,24 @@
   </div>
 
   <script>
+    // ==========================================
+    // 1. Paste your Base Google Form link here
+    const GOOGLE_FORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSfBxjKhCDNF5sflxkgUR0EVeQgyB4Xlf2TH3x1jQjKndqaK5A/viewform"; 
+
+    // 2. Paste the exact "entry" IDs for your Form fields
+    const ENTRY_ID_NAME_ADDRESS = "entry.1855406117"; // For Paragraph 1 (Customer Details)
+    const ENTRY_ID_ORDER_DETAILS = "entry.1317939108"; // For Paragraph 2 (Order Summary)
+    // ==========================================
+
     function switchView(viewId) {
       document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
       document.getElementById(viewId).classList.add('active');
+      window.scrollTo(0,0);
     }
 
-    // --- SINGLE LETTER & NAMEPLATE LOGIC ---
+    let myCart = [];
+
+    // --- PREVIEW LOGIC ---
     function updateSinglePreview() {
       let letter = document.getElementById('singleInput').value.trim().toUpperCase();
       document.getElementById('singleInput').value = letter; 
@@ -254,15 +317,10 @@
       document.getElementById('singleLoop').style.display = letter ? "block" : "none";
     }
 
-    function orderSingle() {
-      const letter = document.getElementById('singleInput').value.trim().toUpperCase();
-      const bg = document.getElementById('singleBg').options[document.getElementById('singleBg').selectedIndex].text;
-      const fg = document.getElementById('singleFg').options[document.getElementById('singleFg').selectedIndex].text;
-      if(!letter) return alert("Please type a letter.");
-      if(confirm(`Total is ₱15.\n\nProceed to GCash payment? No refunds on custom prints.`)) {
-        let body = encodeURIComponent(`ORDER: Single Letter\nLetter: ${letter}\nBackground: ${bg}\nText: ${fg}\nTotal: ₱15\n\n(I am ready to send my GCash receipt)`);
-        window.location.href = `mailto:your-email@gmail.com?subject=Single Letter Order&body=${body}`;
-      }
+    function calculatePlatePrice() {
+      let text = document.getElementById('plateInput').value.trim();
+      if(text.length === 0) return 0;
+      return 50 + (Math.max(0, text.length - 4) * 15);
     }
 
     function updatePlatePreview() {
@@ -286,95 +344,198 @@
       svgCanvas.setAttribute('width', finalWidth);
       svgCanvas.setAttribute('viewBox', `0 0 ${finalWidth} 120`);
 
-      let basePrice = 50;
-      let extraLetters = Math.max(0, text.length - 4);
-      let totalCost = basePrice + (extraLetters * 15);
-      if(text.length === 0) totalCost = 0; 
-      document.getElementById('platePrice').innerText = "₱" + totalCost + ".00";
+      document.getElementById('platePrice').innerText = "₱" + calculatePlatePrice() + ".00";
     }
 
-    function orderPlate() {
-      const text = document.getElementById('plateInput').value.trim().toUpperCase();
-      const bg = document.getElementById('plateBg').options[document.getElementById('plateBg').selectedIndex].text;
-      const fg = document.getElementById('plateFg').options[document.getElementById('plateFg').selectedIndex].text;
-      if(!text) return alert("Please type a name.");
-      let basePrice = 50;
-      let extraLetters = Math.max(0, text.length - 4);
-      let totalCost = basePrice + (extraLetters * 15);
-      if(confirm(`Total is ₱${totalCost}.\n\nProceed to GCash payment? No refunds on custom prints.`)) {
-        let body = encodeURIComponent(`ORDER: Custom Nameplate\nName: ${text}\nBackground: ${bg}\nText: ${fg}\nTotal: ₱${totalCost}\n\n(I am ready to send my GCash receipt)`);
-        window.location.href = `mailto:your-email@gmail.com?subject=Nameplate Order: ${text}&body=${body}`;
+    function updateFlexiPreview() {
+      let qty = Math.max(1, parseInt(document.getElementById('flexiQty').value) || 1);
+      document.getElementById('flexiQty').value = qty;
+      let modelSelect = document.getElementById('flexiModel');
+      let pricePerItem = parseInt(modelSelect.value);
+      
+      let iconMap = { "50": "🦖", "60": "🐙", "55": "🦈" };
+      document.getElementById('flexiPreviewIcon').innerText = iconMap[pricePerItem] || "🧸";
+      document.getElementById('flexiPriceDisplay').innerText = "₱" + (qty * pricePerItem) + ".00";
+    }
+
+    // --- GOOGLE FORM SUBMISSION HELPER ---
+    function sendToGoogleForm(customerDetails, orderText) {
+      let autoFillUrl = `${GOOGLE_FORM_LINK}?usp=pp_url&${ENTRY_ID_NAME_ADDRESS}=${encodeURIComponent(customerDetails)}&${ENTRY_ID_ORDER_DETAILS}=${encodeURIComponent(orderText)}`;
+      window.location.href = autoFillUrl;
+    }
+
+    // --- CART LOGIC ---
+    function addToCart(type) {
+      if(type === 'single') {
+        let letter = document.getElementById('singleInput').value.trim().toUpperCase();
+        if(!letter) return alert("Please type a letter.");
+        let bg = document.getElementById('singleBg').options[document.getElementById('singleBg').selectedIndex].text;
+        let fg = document.getElementById('singleFg').options[document.getElementById('singleFg').selectedIndex].text;
+        myCart.push({ name: `Single Letter (${letter})`, details: `BG: ${bg}, Text: ${fg}`, price: 15 });
+      } 
+      else if(type === 'plate') {
+        let text = document.getElementById('plateInput').value.trim().toUpperCase();
+        if(!text) return alert("Please type a name.");
+        let bg = document.getElementById('plateBg').options[document.getElementById('plateBg').selectedIndex].text;
+        let fg = document.getElementById('plateFg').options[document.getElementById('plateFg').selectedIndex].text;
+        myCart.push({ name: `Nameplate (${text})`, details: `BG: ${bg}, Text: ${fg}`, price: calculatePlatePrice() });
+      }
+      else if(type === 'flexi') {
+        let modelDropdown = document.getElementById('flexiModel');
+        let modelName = modelDropdown.options[modelDropdown.selectedIndex].text.split(" (")[0];
+        let pricePerItem = parseInt(modelDropdown.value);
+        let color = document.getElementById('flexiColor').value;
+        let qty = parseInt(document.getElementById('flexiQty').value);
+        myCart.push({ name: `${qty}x ${modelName}`, details: `Color: ${color}`, price: (qty * pricePerItem) });
+      }
+      
+      document.getElementById('cartBadge').innerText = myCart.length;
+      alert("Added to cart! Click the 🛒 icon to checkout.");
+    }
+
+    function orderDirect(type) {
+      if(type === 'single') {
+        let letter = document.getElementById('singleInput').value.trim().toUpperCase();
+        let customerName = document.getElementById('singleCustomerName').value.trim();
+        if(!letter) return;
+        if(!customerName) return alert("Please enter your name.");
+        let bg = document.getElementById('singleBg').options[document.getElementById('singleBg').selectedIndex].text;
+        let fg = document.getElementById('singleFg').options[document.getElementById('singleFg').selectedIndex].text;
+        
+        let customerDetails = `Name: ${customerName}\nFulfillment: Direct Order (Contact for delivery)`;
+        let orderData = `ORDER: Single Letter (${letter})\nBG: ${bg} | Text: ${fg}\n\nTotal: ₱15`;
+        sendToGoogleForm(customerDetails, orderData);
+      } 
+      else if(type === 'plate') {
+        let text = document.getElementById('plateInput').value.trim().toUpperCase();
+        let customerName = document.getElementById('plateCustomerName').value.trim();
+        if(!text) return;
+        if(!customerName) return alert("Please enter your name.");
+        let bg = document.getElementById('plateBg').options[document.getElementById('plateBg').selectedIndex].text;
+        let fg = document.getElementById('plateFg').options[document.getElementById('plateFg').selectedIndex].text;
+        let cost = calculatePlatePrice();
+        
+        let customerDetails = `Name: ${customerName}\nFulfillment: Direct Order (Contact for delivery)`;
+        let orderData = `ORDER: Nameplate (${text})\nBG: ${bg} | Text: ${fg}\n\nTotal: ₱${cost}`;
+        sendToGoogleForm(customerDetails, orderData);
+      }
+      else if(type === 'flexi') {
+        let model = document.getElementById('flexiModel').options[document.getElementById('flexiModel').selectedIndex].text.split(" (")[0];
+        let color = document.getElementById('flexiColor').value;
+        let qty = parseInt(document.getElementById('flexiQty').value);
+        let customerName = document.getElementById('flexiCustomerName').value.trim();
+        if(!customerName) return alert("Please enter your name.");
+        let price = qty * parseInt(document.getElementById('flexiModel').value);
+        
+        let customerDetails = `Name: ${customerName}\nFulfillment: Direct Order (Contact for delivery)`;
+        let orderData = `ORDER: ${qty}x ${model}\nColor: ${color}\n\nTotal: ₱${price}`;
+        sendToGoogleForm(customerDetails, orderData);
       }
     }
 
-    // --- FLEXI CART LOGIC ---
-    function updateCart() {
-      // Get quantities (prevent negative numbers)
-      let qRex = Math.max(0, parseInt(document.getElementById('qtyRex').value) || 0);
-      let qOcto = Math.max(0, parseInt(document.getElementById('qtyOcto').value) || 0);
-      let qShark = Math.max(0, parseInt(document.getElementById('qtyShark').value) || 0);
-      
-      // Update Inputs just in case user typed a negative
-      document.getElementById('qtyRex').value = qRex;
-      document.getElementById('qtyOcto').value = qOcto;
-      document.getElementById('qtyShark').value = qShark;
-
-      // Math for Rows
-      let tRex = qRex * 50;
-      let tOcto = qOcto * 60;
-      let tShark = qShark * 55;
-
-      // Display Row Totals
-      document.getElementById('totalRex').innerText = "₱" + tRex;
-      document.getElementById('totalOcto').innerText = "₱" + tOcto;
-      document.getElementById('totalShark').innerText = "₱" + tShark;
-
-      // Subtotal & Delivery
-      let subtotal = tRex + tOcto + tShark;
-      let deliveryType = document.getElementById('deliveryOption').value;
-      
-      // Only charge delivery fee if they actually have items in the cart!
-      let fee = (deliveryType === "deliver" && subtotal > 0) ? 15 : 0;
-      let grandTotal = subtotal + fee;
-
-      // Update Cart Summary
-      document.getElementById('cartSubtotal').innerText = "₱" + subtotal + ".00";
-      document.getElementById('cartFee').innerText = "₱" + fee + ".00";
-      document.getElementById('cartTotal').innerText = "₱" + grandTotal + ".00";
+    function openCart() {
+      switchView('cartView');
+      renderCart();
     }
 
-    function orderFlexiCart() {
-      let qRex = parseInt(document.getElementById('qtyRex').value) || 0;
-      let qOcto = parseInt(document.getElementById('qtyOcto').value) || 0;
-      let qShark = parseInt(document.getElementById('qtyShark').value) || 0;
+    function removeFromCart(index) {
+      myCart.splice(index, 1);
+      document.getElementById('cartBadge').innerText = myCart.length;
+      renderCart();
+    }
 
-      let subtotal = (qRex*50) + (qOcto*60) + (qShark*55);
+    function renderCart() {
+      let container = document.getElementById('cartItemsContainer');
+      container.innerHTML = "";
       
-      if(subtotal === 0) return alert("Your cart is empty! Please add some items.");
-
-      let deliveryType = document.getElementById('deliveryOption');
-      let deliveryName = deliveryType.options[deliveryType.selectedIndex].text;
-      let fee = (deliveryType.value === "deliver") ? 15 : 0;
-      let grandTotal = subtotal + fee;
-
-      // Build the itemized receipt string
-      let receipt = "ORDER: Flexi Toys\n\n";
-      if(qRex > 0) receipt += `- ${qRex}x Flexi Rex (${document.getElementById('colorRex').value}) = ₱${qRex*50}\n`;
-      if(qOcto > 0) receipt += `- ${qOcto}x Flexi Octopus (${document.getElementById('colorOcto').value}) = ₱${qOcto*60}\n`;
-      if(qShark > 0) receipt += `- ${qShark}x Articulated Shark (${document.getElementById('colorShark').value}) = ₱${qShark*55}\n`;
-      
-      receipt += `\nMethod: ${deliveryName}\nTotal to Pay: ₱${grandTotal}\n\n(I am ready to send my GCash receipt)`;
-
-      if(confirm(`Your cart total is ₱${grandTotal}.\n\nProceed to GCash checkout?`)) {
-        window.location.href = `mailto:your-email@gmail.com?subject=Flexi Cart Order&body=${encodeURIComponent(receipt)}`;
+      if(myCart.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#888;'>Your cart is empty.</p>";
+        document.getElementById('masterSubtotal').innerText = "₱0.00";
+        document.getElementById('masterFee').innerText = "₱0.00";
+        document.getElementById('masterTotal').innerText = "₱0.00";
+        document.getElementById('addressGroup').style.display = "none";
+        return;
       }
+
+      let subtotal = 0;
+      myCart.forEach((item, index) => {
+        subtotal += item.price;
+        container.innerHTML += `
+          <div class="cart-item-row">
+            <div class="cart-item-info">
+              <strong>${item.name}</strong>
+              <span>${item.details}</span>
+            </div>
+            <div style="display:flex; align-items:center;">
+              <div class="cart-item-price">₱${item.price}</div>
+              <button class="remove-btn" onclick="removeFromCart(${index})">X</button>
+            </div>
+          </div>
+        `;
+      });
+
+      let deliveryOption = document.getElementById('cartDeliveryOption');
+      let fee = parseInt(deliveryOption.value);
+      
+      document.getElementById('addressGroup').style.display = (fee > 0) ? "block" : "none";
+
+      let total = subtotal + fee;
+      document.getElementById('masterSubtotal').innerText = "₱" + subtotal + ".00";
+      document.getElementById('masterFee').innerText = "₱" + fee + ".00";
+      document.getElementById('masterTotal').innerText = "₱" + total + ".00";
+    }
+
+    function checkoutMasterCart() {
+      if(myCart.length === 0) return alert("Your cart is empty!");
+
+      let customerName = document.getElementById('cartCustomerName').value.trim();
+      if(!customerName) return alert("Please enter your full name.");
+
+      let deliveryOption = document.getElementById('cartDeliveryOption');
+      let fee = parseInt(deliveryOption.value);
+      let deliveryName = deliveryOption.options[deliveryOption.selectedIndex].text;
+      let address = document.getElementById('deliveryAddress').value.trim();
+
+      if (fee > 0 && address === "") {
+        return alert("Error: Please provide a complete delivery address before checking out.");
+      }
+
+      let customerDetails = `Name: ${customerName}\nFulfillment: ${deliveryName}`;
+      if (fee > 0) {
+        customerDetails += `\nAddress: ${address}`;
+      }
+
+      let subtotal = 0;
+      let orderData = "";
+      
+      myCart.forEach((item, index) => {
+        subtotal += item.price;
+        orderData += `${index + 1}. ${item.name}\n   ${item.details}\n   Price: ₱${item.price}\n\n`;
+      });
+
+      let total = subtotal + fee;
+      
+      if (fee > 0) {
+        orderData += `Delivery Fee: ₱${fee}\n`;
+      }
+      orderData += `GRAND TOTAL: ₱${total}`;
+
+      myCart = []; 
+      document.getElementById('cartBadge').innerText = 0;
+      document.getElementById('deliveryAddress').value = ""; 
+      
+      sendToGoogleForm(customerDetails, orderData);
     }
 
     function orderCAD() {
       const desc = document.getElementById('cadDesc').value;
+      const name = document.getElementById('cadName').value.trim();
+      if(!name) return alert("Please enter your name.");
       if(!desc) return alert("Please describe your project.");
-      let body = encodeURIComponent(`CAD Inquiry:\n\n${desc}`);
-      window.location.href = `mailto:your-email@gmail.com?subject=CAD Consultation&body=${body}`;
+      
+      let customerDetails = `Name: ${name}\nService: Custom CAD Engineering`;
+      let orderData = `Project Description:\n${desc}`;
+      sendToGoogleForm(customerDetails, orderData);
     }
   </script>
 </body>
