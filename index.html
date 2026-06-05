@@ -93,8 +93,8 @@
       
       <div class="preview-canvas">
         <svg id="singleSvg" width="150" height="150" viewBox="0 0 150 150">
-          <circle id="singleLoop" cx="75" cy="48" r="8" fill="none" stroke="DimGray" stroke-width="8" />
-          <text id="singleBaseText" x="75" y="125" font-family="Arial, sans-serif" font-weight="900" font-size="85" text-anchor="middle" fill="DimGray" stroke="DimGray" stroke-width="22" stroke-linejoin="round">M</text>
+          <circle id="singleLoop" cx="75" cy="48" r="8" fill="none" stroke="Black" stroke-width="8" />
+          <text id="singleBaseText" x="75" y="125" font-family="Arial, sans-serif" font-weight="900" font-size="85" text-anchor="middle" fill="Black" stroke="Black" stroke-width="22" stroke-linejoin="round">M</text>
           <text id="singleInlayText" x="75" y="125" font-family="Arial, sans-serif" font-weight="900" font-size="85" text-anchor="middle" fill="Crimson">M</text>
         </svg>
       </div>
@@ -106,17 +106,17 @@
       <div class="form-group">
         <label>Background Color:</label>
         <select id="singleBg" onchange="updateSinglePreview()">
-          <option value="DimGray">Dark Gray</option>
           <option value="Black">Solid Black</option>
           <option value="White">White</option>
+          <option value="Crimson">Red</option>
         </select>
       </div>
       <div class="form-group">
         <label>Letter Color:</label>
         <select id="singleFg" onchange="updateSinglePreview()">
-          <option value="Crimson">Crimson Red</option>
-          <option value="Gold">Gold</option>
-          <option value="DodgerBlue">Blue</option>
+          <option value="Crimson">Red</option>
+          <option value="White">White</option>
+          <option value="Black">Solid Black</option>
         </select>
       </div>
 
@@ -140,30 +140,30 @@
       
       <div class="preview-canvas" style="overflow-x: auto;">
         <svg id="plateSvg" width="300" height="120" viewBox="0 0 300 120">
-          <circle id="plateLoop" cx="35" cy="72" r="6" fill="none" stroke="DimGray" stroke-width="6" />
-          <text id="plateBaseText" x="48" y="90" font-family="Arial, sans-serif" font-weight="900" font-size="50" letter-spacing="2" text-anchor="start" fill="DimGray" stroke="DimGray" stroke-width="20" stroke-linejoin="round">GENO</text>
-          <text id="plateInlayText" x="48" y="90" font-family="Arial, sans-serif" font-weight="900" font-size="50" letter-spacing="2" text-anchor="start" fill="Crimson">GENO</text>
+          <circle id="plateLoop" cx="35" cy="72" r="6" fill="none" stroke="Black" stroke-width="6" />
+          <text id="plateBaseText" x="48" y="90" font-family="Arial, sans-serif" font-weight="900" font-size="50" letter-spacing="2" text-anchor="start" fill="Black" stroke="Black" stroke-width="20" stroke-linejoin="round">&gt;w&lt;</text>
+          <text id="plateInlayText" x="48" y="90" font-family="Arial, sans-serif" font-weight="900" font-size="50" letter-spacing="2" text-anchor="start" fill="Crimson">&gt;w&lt;</text>
         </svg>
       </div>
 
       <div class="form-group">
         <label>Name (Max 8 letters):</label>
-        <input type="text" id="plateInput" maxlength="8" value="GENO" oninput="updatePlatePreview()" style="text-transform: uppercase;">
+        <input type="text" id="plateInput" maxlength="8" value=">w<" oninput="updatePlatePreview()" style="text-transform: uppercase;">
       </div>
       <div class="form-group">
         <label>Background Color:</label>
         <select id="plateBg" onchange="updatePlatePreview()">
-          <option value="DimGray">Dark Gray</option>
           <option value="Black">Solid Black</option>
           <option value="White">White</option>
+          <option value="Crimson">Red</option>
         </select>
       </div>
       <div class="form-group">
         <label>Letter Color:</label>
         <select id="plateFg" onchange="updatePlatePreview()">
-          <option value="Crimson">Crimson Red</option>
-          <option value="Gold">Gold</option>
-          <option value="DodgerBlue">Blue</option>
+          <option value="Crimson">Red</option>
+          <option value="White">White</option>
+          <option value="Black">Solid Black</option>
         </select>
       </div>
 
@@ -203,10 +203,9 @@
       <div class="form-group">
         <label>Select Color:</label>
         <select id="flexiColor">
-          <option>Crimson Red</option>
           <option>Solid Black</option>
-          <option>DodgerBlue</option>
-          <option>Gold</option>
+          <option>White</option>
+          <option>Red</option>
         </select>
       </div>
 
@@ -727,6 +726,15 @@
       let autoFillUrl = `${CAD_FORM_LINK}?usp=pp_url&${CAD_ENTRY_ID_NAME}=${encodeURIComponent(name)}&${CAD_ENTRY_ID_ADDRESS}=${encodeURIComponent(address)}&${CAD_ENTRY_ID_DESC}=${encodeURIComponent(bundledDescription)}&${CAD_ENTRY_ID_TOTAL}=${encodeURIComponent(grandTotalRaw)}`;
       window.location.href = autoFillUrl;
     }
+
+    // ==========================================
+    // INITIALIZE PREVIEWS ON PAGE LOAD
+    // ==========================================
+    window.onload = function() {
+      updateSinglePreview();
+      updatePlatePreview();
+      updateFlexiPreview();
+    };
   </script>
 </body>
 </html>
