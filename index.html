@@ -353,11 +353,14 @@
 
       <div class="cart-summary" style="margin-top: 10px;">
         <div class="summary-row"><span>Est. Plastic Weight:</span> <span id="cadWeightDisplay">0g</span></div>
+        <div class="summary-row" style="color: #666;"><span>Est. Machine Time:</span> <span id="cadTimeDisplay">0 hrs</span></div>
+        <div class="summary-row" style="color: #007bff;"><span>Est. Turnaround:</span> <span id="cadTurnaroundDisplay">1-2 Days</span></div>
+        <div style="border-top: 1px solid #cce5ff; margin: 8px 0;"></div>
         <div class="summary-row"><span>Est. Print Base Cost:</span> <span id="cadBasePriceDisplay">₱0.00</span></div>
         <div class="summary-row"><span>3D Modeling Fee:</span> <span id="cadModelingFeeDisplay">₱0.00</span></div>
         <div class="summary-row"><span>Delivery Fee:</span> <span id="cadFeeDisplay">₱0.00</span></div>
         <div class="summary-total"><span>GRAND TOTAL:</span> <span id="cadPriceDisplay" style="color: #28a745;">₱0.00</span></div>
-        <p style="font-size: 11px; color: #888; text-align: center; margin-top: 5px;">*Final print specs may adjust slightly based on actual CAD geometry.</p>
+        <p style="font-size: 11px; color: #888; text-align: center; margin-top: 5px;">*Final print specs and timelines may adjust based on actual CAD geometry.</p>
       </div>
 
       <button class="action-btn" onclick="orderCAD()">Proceed to Checkout</button>
@@ -628,12 +631,12 @@
       let infill = parseFloat(document.getElementById('cadInfill').value) || 15;
       
       let deliveryFee = parseFloat(document.getElementById('cadDeliveryOption').value) || 0;
-      
-      // Calculate CAD service modeling fee selection directly from the option value
       let modelingFee = parseFloat(document.getElementById('cadServiceType').value) || 0;
 
       if(l === 0 || w === 0 || h === 0) {
         document.getElementById('cadWeightDisplay').innerText = "0g";
+        document.getElementById('cadTimeDisplay').innerText = "0 hrs";
+        document.getElementById('cadTurnaroundDisplay').innerText = "-";
         document.getElementById('cadBasePriceDisplay').innerText = "₱0.00";
         document.getElementById('cadModelingFeeDisplay').innerText = "₱0.00";
         document.getElementById('cadFeeDisplay').innerText = "₱0.00";
@@ -645,17 +648,40 @@
       const PRICE_PER_GRAM = 2.50; 
       const BASE_SETUP_FEE = 50;   
       const PLA_DENSITY = 1.24;    
-      const SHAPE_FACTOR = 0.5;    
 
-      let volumeCm3 = (l * w * h) / 1000;
-      let estimatedWeightGrams = volumeCm3 * PLA_DENSITY * SHAPE_FACTOR * (0.20 + ((infill / 100) * 0.80));
-      estimatedWeightGrams = Math.max(1, Math.round(estimatedWeightGrams)); 
+      // 1. Calculate Weight
+      let surfaceAreaMm2 = 2 * ((l * w) + (l * h) + (w * h));
+      let shellVolumeCm3 = (surfaceAreaMm2 * 1.0) / 1000;
+      let shellWeight = shellVolumeCm3 * PLA_DENSITY;
 
+      let innerL = Math.max(0, l - 2);
+      let innerW = Math.max(0, w - 2);
+      let innerH = Math.max(0, h - 2);
+      let innerVolumeCm3 = (innerL * innerW * innerH) / 1000;
+      let infillWeight = innerVolumeCm3 * PLA_DENSITY * (infill / 100);
+
+      let estimatedWeightGrams = (shellWeight + infillWeight) * 0.90;
+      estimatedWeightGrams = Math.max(1, Math.ceil(estimatedWeightGrams)); 
+
+      // 2. Calculate Pricing
       let estimatedBasePrice = BASE_SETUP_FEE + (estimatedWeightGrams * PRICE_PER_GRAM);
       let grandTotal = estimatedBasePrice + modelingFee + deliveryFee;
 
+      // 3. Calculate Timelines (Assuming ~12g per hour print speed)
+      let printHours = Math.ceil(estimatedWeightGrams / 12);
+      let timeString = printHours <= 1 ? "1 hour" : printHours + " hours";
+
+      // Calculate Turnaround Days based on Modeling Complexity
+      let turnaround = "1-2 Days"; 
+      if (modelingFee === 150) turnaround = "2-3 Days";
+      else if (modelingFee === 350) turnaround = "3-4 Days";
+      else if (modelingFee === 600) turnaround = "5-7 Days";
+      else if (modelingFee === 1000) turnaround = "7-10 Days";
+
       // Update UI Elements
       document.getElementById('cadWeightDisplay').innerText = "~" + estimatedWeightGrams + "g";
+      document.getElementById('cadTimeDisplay').innerText = "~" + timeString;
+      document.getElementById('cadTurnaroundDisplay').innerText = turnaround;
       document.getElementById('cadBasePriceDisplay').innerText = "₱" + estimatedBasePrice.toFixed(2);
       document.getElementById('cadModelingFeeDisplay').innerText = "₱" + modelingFee.toFixed(2);
       document.getElementById('cadFeeDisplay').innerText = "₱" + deliveryFee.toFixed(2);
@@ -682,6 +708,9 @@
       const deliveryText = deliverySelect.options[deliverySelect.selectedIndex].text;
 
       const estWeight = document.getElementById('cadWeightDisplay').innerText;
+      const estTime = document.getElementById('cadTimeDisplay').innerText;
+      const estTurnaround = document.getElementById('cadTurnaroundDisplay').innerText;
+      
       const estBasePrice = document.getElementById('cadBasePriceDisplay').innerText;
       const estModelingFee = document.getElementById('cadModelingFeeDisplay').innerText;
       const grandTotalWithSign = document.getElementById('cadPriceDisplay').innerText;
@@ -693,7 +722,7 @@
       if(!desc) return alert("Please describe your project.");
       if(!l || !w || !h) return alert("Please enter the L x W x H dimensions.");
       
-      let bundledDescription = `PROJECT GOAL:\n${desc}\n\n--- 3D PRINTING SPECS ---\nDimensions: ${l}mm x ${w}mm x ${h}mm\nInfill: ${infillText}\nPattern: ${pattern}\nEst. Weight: ${estWeight}\n\n--- SERVICE REQUISITION ---\nRequirements: ${serviceText}\n\n--- COST BREAKDOWN ---\nPrint Base Price: ${estBasePrice}\nModeling Fee: ${estModelingFee}\nFulfillment: ${deliveryText}`;
+      let bundledDescription = `PROJECT GOAL:\n${desc}\n\n--- 3D PRINTING SPECS ---\nDimensions: ${l}mm x ${w}mm x ${h}mm\nInfill: ${infillText}\nPattern: ${pattern}\nEst. Weight: ${estWeight}\nEst. Machine Time: ${estTime}\n\n--- SERVICE TIMELINE ---\nRequirements: ${serviceText}\nPromised Turnaround: ${estTurnaround}\n\n--- COST BREAKDOWN ---\nPrint Base Price: ${estBasePrice}\nModeling Fee: ${estModelingFee}\nFulfillment: ${deliveryText}`;
       
       let autoFillUrl = `${CAD_FORM_LINK}?usp=pp_url&${CAD_ENTRY_ID_NAME}=${encodeURIComponent(name)}&${CAD_ENTRY_ID_ADDRESS}=${encodeURIComponent(address)}&${CAD_ENTRY_ID_DESC}=${encodeURIComponent(bundledDescription)}&${CAD_ENTRY_ID_TOTAL}=${encodeURIComponent(grandTotalRaw)}`;
       window.location.href = autoFillUrl;
