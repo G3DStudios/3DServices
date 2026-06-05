@@ -54,14 +54,12 @@
 </head>
 <body>
 
-  <!-- Floating Cart Button -->
   <div class="floating-cart" onclick="openCart()">
     🛒<div class="cart-badge" id="cartBadge">0</div>
   </div>
 
   <div class="container">
     
-    <!-- MAIN MENU -->
     <div id="mainMenu" class="view active">
       <h1>G3D Studios</h1>
       <p class="subtitle">Local manufacturing & custom CAD.</p>
@@ -87,7 +85,6 @@
       </button>
     </div>
 
-    <!-- SINGLE LETTER VIEW -->
     <div id="singleLetterView" class="view">
       <h1>Single Letter Tag</h1>
       
@@ -134,7 +131,6 @@
       <button class="back-btn" onclick="switchView('mainMenu')">Back to Menu</button>
     </div>
 
-    <!-- FULL NAMEPLATE VIEW -->
     <div id="nameplateView" class="view">
       <h1>Custom Nameplate</h1>
       
@@ -182,7 +178,6 @@
       <button class="back-btn" onclick="switchView('mainMenu')">Back to Menu</button>
     </div>
 
-    <!-- FLEXI TOYS BUILDER -->
     <div id="flexiView" class="view">
       <h1>Flexi Toy Builder</h1>
       <p class="subtitle">Mix and match models and colors.</p>
@@ -229,13 +224,11 @@
       <button class="back-btn" onclick="switchView('mainMenu')">Back to Menu</button>
     </div>
 
-    <!-- MASTER CART VIEW -->
     <div id="cartView" class="view">
       <h1>Your Cart</h1>
       
       <div id="cartItemsContainer" style="margin-bottom: 20px;">
-        <!-- Cart items injected via JS -->
-      </div>
+        </div>
 
       <div class="form-group">
         <label style="color: #007bff;">Your Full Name:</label>
@@ -245,10 +238,12 @@
       <div class="form-group" style="margin-top: 15px;">
         <label>Fulfillment Method:</label>
         <select id="cartDeliveryOption" onchange="renderCart()" style="border-color: #007bff;">
-          <option value="0">Walk-in / Campus Pick-up (LSPU-SCC) - Free</option>
-          <option value="15">Delivery: Santa Maria Proper (+₱15.00)</option>
-          <option value="30">Delivery: Nearby Barangays (+₱30.00)</option>
-          <option value="50">Delivery: Outside Area (+₱50.00)</option>
+          <option value="0">Walk-in / Pick-up (Brgy. Calangay) - Free</option>
+          <option value="15">Delivery: Brgy. Calangay (+₱15.00)</option>
+          <option value="30">Delivery: Nearby Barangays in Santa Maria (+₱30.00)</option>
+          <option value="50">Delivery: Mabitac Area (+₱50.00)</option>
+          <option value="80">Delivery: Siniloan Area (+₱80.00)</option>
+          <option value="120">Delivery: Outside Area / Farther (+₱120.00)</option>
         </select>
       </div>
 
@@ -267,18 +262,74 @@
       <button class="back-btn" onclick="switchView('mainMenu')">Continue Shopping</button>
     </div>
 
-    <!-- CAD SERVICE VIEW -->
     <div id="cadView" class="view">
       <h1>Engineering & CAD</h1>
+      <p class="subtitle">Instant 3D Print Estimator</p>
+
       <div class="form-group">
         <label>Your Name:</label>
         <input type="text" id="cadName" placeholder="e.g., Juan Dela Cruz">
       </div>
       <div class="form-group">
-        <label>Describe the part (Measurements, purpose):</label>
-        <textarea id="cadDesc" rows="5" placeholder="I need a custom electronics enclosure..."></textarea>
+        <label>Your Address / Location:</label>
+        <input type="text" id="cadAddress" placeholder="e.g., Santa Maria, Laguna">
       </div>
-      <button class="action-btn" onclick="orderCAD()">Request Consultation</button>
+      
+      <div class="form-group">
+        <label>Describe the part (Purpose, specific details):</label>
+        <textarea id="cadDesc" rows="3" placeholder="I need a custom electronics enclosure..."></textarea>
+      </div>
+
+      <div style="background: #f8fbff; border: 2px solid #cce5ff; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+        <label style="color: #007bff; margin-bottom: 10px;">Maximum Dimensions (mm):</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="number" id="cadL" placeholder="Length" min="1" oninput="updateCadPrice()" style="width: 33%;">
+          <input type="number" id="cadW" placeholder="Width" min="1" oninput="updateCadPrice()" style="width: 33%;">
+          <input type="number" id="cadH" placeholder="Height" min="1" oninput="updateCadPrice()" style="width: 33%;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Infill Percentage (Interior density):</label>
+        <select id="cadInfill" onchange="updateCadPrice()">
+          <option value="15">15% (Default - Balanced strength & cost)</option>
+          <option value="5">5% (Draft - Fragile but cheapest)</option>
+          <option value="25">25% (Strong - For functional/electronic parts)</option>
+          <option value="50">50% (Heavy Duty - High stress parts)</option>
+          <option value="100">100% (Solid Plastic - Most expensive)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Infill Pattern:</label>
+        <select id="cadPattern">
+          <option value="Rectilinear">Rectilinear (Default - Standard structural grid)</option>
+          <option value="Lightning">Lightning (Lightest weight - Less material cost)</option>
+          <option value="Gyroid">Gyroid (Best overall multi-directional strength)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label>Fulfillment Method:</label>
+        <select id="cadDeliveryOption" onchange="updateCadPrice()" style="border-color: #007bff;">
+          <option value="0">Walk-in / Pick-up (Brgy. Calangay) - Free</option>
+          <option value="15">Delivery: Brgy. Calangay (+₱15.00)</option>
+          <option value="30">Delivery: Nearby Barangays in Santa Maria (+₱30.00)</option>
+          <option value="50">Delivery: Mabitac Area (+₱50.00)</option>
+          <option value="80">Delivery: Siniloan Area (+₱80.00)</option>
+          <option value="120">Delivery: Outside Area / Farther (+₱120.00)</option>
+        </select>
+      </div>
+
+      <div class="cart-summary" style="margin-top: 10px;">
+        <div class="summary-row"><span>Est. Plastic Weight:</span> <span id="cadWeightDisplay">0g</span></div>
+        <div class="summary-row"><span>Est. Base Price:</span> <span id="cadBasePriceDisplay">₱0.00</span></div>
+        <div class="summary-row"><span>Delivery Fee:</span> <span id="cadFeeDisplay">₱0.00</span></div>
+        <div class="summary-total"><span>GRAND TOTAL:</span> <span id="cadPriceDisplay" style="color: #28a745;">₱0.00</span></div>
+        <p style="font-size: 11px; color: #888; text-align: center; margin-top: 5px;">*Final base price may adjust slightly based on actual CAD file geometry.</p>
+      </div>
+
+      <button class="action-btn" onclick="orderCAD()">Proceed to Checkout</button>
       <button class="back-btn" onclick="switchView('mainMenu')">Back to Menu</button>
     </div>
 
@@ -286,13 +337,24 @@
 
   <script>
     // ==========================================
-    // 1. Paste your Base Google Form link here
+    // STORE ORDERS FORM (Keychains & Flexi Toys)
+    // ==========================================
     const GOOGLE_FORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSfBxjKhCDNF5sflxkgUR0EVeQgyB4Xlf2TH3x1jQjKndqaK5A/viewform"; 
-
-    // 2. Paste the exact "entry" IDs for your Form fields
     const ENTRY_ID_NAME_ADDRESS = "entry.1855406117"; // For Paragraph 1 (Customer Details)
     const ENTRY_ID_ORDER_DETAILS = "entry.1317939108"; // For Paragraph 2 (Order Summary)
+
     // ==========================================
+    // NEW: CAD CONSULTATION FORM
+    // ==========================================
+    const CAD_FORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSceb2IDA5SVOZswDLbvhmxtRZiIJgk6wyXquIQgQO_s7igeyw/viewform";
+    const CAD_ENTRY_ID_NAME = "entry.1081847241"; // For Name input
+    const CAD_ENTRY_ID_ADDRESS = "entry.261614978"; // For Address input
+    const CAD_ENTRY_ID_DESC = "entry.351512784"; // For Project Description input
+    
+    // NEW SECTION 4 ID
+    const CAD_ENTRY_ID_TOTAL = "entry.1517691125"; 
+    // ==========================================
+
 
     function switchView(viewId) {
       document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -527,15 +589,81 @@
       sendToGoogleForm(customerDetails, orderData);
     }
 
-    function orderCAD() {
-      const desc = document.getElementById('cadDesc').value;
-      const name = document.getElementById('cadName').value.trim();
-      if(!name) return alert("Please enter your name.");
-      if(!desc) return alert("Please describe your project.");
+    // --- CAD AUTO-CALCULATOR LOGIC ---
+    function updateCadPrice() {
+      let l = parseFloat(document.getElementById('cadL').value) || 0;
+      let w = parseFloat(document.getElementById('cadW').value) || 0;
+      let h = parseFloat(document.getElementById('cadH').value) || 0;
+      let infill = parseFloat(document.getElementById('cadInfill').value) || 15;
       
-      let customerDetails = `Name: ${name}\nService: Custom CAD Engineering`;
-      let orderData = `Project Description:\n${desc}`;
-      sendToGoogleForm(customerDetails, orderData);
+      // Grab the delivery fee
+      let deliveryFee = parseFloat(document.getElementById('cadDeliveryOption').value) || 0;
+
+      // If dimensions are missing, reset display
+      if(l === 0 || w === 0 || h === 0) {
+        document.getElementById('cadWeightDisplay').innerText = "0g";
+        document.getElementById('cadBasePriceDisplay').innerText = "₱0.00";
+        document.getElementById('cadFeeDisplay').innerText = "₱0.00";
+        document.getElementById('cadPriceDisplay').innerText = "₱0.00";
+        return;
+      }
+
+      // BUSINESS SETTINGS
+      const PRICE_PER_GRAM = 2.50; 
+      const BASE_SETUP_FEE = 50;   
+      const PLA_DENSITY = 1.24;    
+      const SHAPE_FACTOR = 0.5;    
+
+      let volumeCm3 = (l * w * h) / 1000;
+      let estimatedWeightGrams = volumeCm3 * PLA_DENSITY * SHAPE_FACTOR * (0.20 + ((infill / 100) * 0.80));
+      estimatedWeightGrams = Math.max(1, Math.round(estimatedWeightGrams)); 
+
+      let estimatedBasePrice = BASE_SETUP_FEE + (estimatedWeightGrams * PRICE_PER_GRAM);
+      let grandTotal = estimatedBasePrice + deliveryFee;
+
+      // Update Screen
+      document.getElementById('cadWeightDisplay').innerText = "~" + estimatedWeightGrams + "g";
+      document.getElementById('cadBasePriceDisplay').innerText = "₱" + estimatedBasePrice.toFixed(2);
+      document.getElementById('cadFeeDisplay').innerText = "₱" + deliveryFee.toFixed(2);
+      document.getElementById('cadPriceDisplay').innerText = "₱" + grandTotal.toFixed(2);
+    }
+
+    function orderCAD() {
+      const name = document.getElementById('cadName').value.trim();
+      const address = document.getElementById('cadAddress').value.trim();
+      const desc = document.getElementById('cadDesc').value.trim();
+      
+      // Grab the new calculator parameters
+      const l = document.getElementById('cadL').value;
+      const w = document.getElementById('cadW').value;
+      const h = document.getElementById('cadH').value;
+      
+      const infillSelect = document.getElementById('cadInfill');
+      const infillText = infillSelect.options[infillSelect.selectedIndex].text;
+      const pattern = document.getElementById('cadPattern').value;
+      
+      const deliverySelect = document.getElementById('cadDeliveryOption');
+      const deliveryText = deliverySelect.options[deliverySelect.selectedIndex].text;
+
+      const estWeight = document.getElementById('cadWeightDisplay').innerText;
+      const estBasePrice = document.getElementById('cadBasePriceDisplay').innerText;
+      
+      // Grab the text with the Peso sign so it looks good in the description box
+      const grandTotalWithSign = document.getElementById('cadPriceDisplay').innerText;
+      
+      // Strip out the "₱" symbol so it inputs cleanly into your new Section 4 total box!
+      const grandTotalRaw = grandTotalWithSign.replace('₱', '').trim();
+
+      if(!name) return alert("Please enter your name.");
+      if(!address) return alert("Please enter your address.");
+      if(!desc) return alert("Please describe your project.");
+      if(!l || !w || !h) return alert("Please enter the L x W x H dimensions.");
+      
+      let bundledDescription = `PROJECT GOAL:\n${desc}\n\n--- 3D PRINTING ESTIMATE ---\nDimensions: ${l}mm x ${w}mm x ${h}mm\nInfill: ${infillText}\nPattern: ${pattern}\nEst. Weight: ${estWeight}\n\n--- COST BREAKDOWN ---\nBase Price: ${estBasePrice}\nFulfillment: ${deliveryText}`;
+      
+      // The autoFillUrl now correctly includes CAD_ENTRY_ID_TOTAL at the very end
+      let autoFillUrl = `${CAD_FORM_LINK}?usp=pp_url&${CAD_ENTRY_ID_NAME}=${encodeURIComponent(name)}&${CAD_ENTRY_ID_ADDRESS}=${encodeURIComponent(address)}&${CAD_ENTRY_ID_DESC}=${encodeURIComponent(bundledDescription)}&${CAD_ENTRY_ID_TOTAL}=${encodeURIComponent(grandTotalRaw)}`;
+      window.location.href = autoFillUrl;
     }
   </script>
 </body>
