@@ -106,17 +106,15 @@
       <div class="form-group">
         <label>Background Color:</label>
         <select id="singleBg" onchange="updateSinglePreview()">
+          <!-- Populated by Google Sheets -->
           <option value="Black">Solid Black</option>
-          <option value="White">White</option>
-          <option value="Crimson">Red</option>
         </select>
       </div>
       <div class="form-group">
         <label>Letter Color:</label>
         <select id="singleFg" onchange="updateSinglePreview()">
+           <!-- Populated by Google Sheets -->
           <option value="Crimson">Red</option>
-          <option value="White">White</option>
-          <option value="Black">Solid Black</option>
         </select>
       </div>
 
@@ -153,17 +151,15 @@
       <div class="form-group">
         <label>Background Color:</label>
         <select id="plateBg" onchange="updatePlatePreview()">
+          <!-- Populated by Google Sheets -->
           <option value="Black">Solid Black</option>
-          <option value="White">White</option>
-          <option value="Crimson">Red</option>
         </select>
       </div>
       <div class="form-group">
         <label>Letter Color:</label>
         <select id="plateFg" onchange="updatePlatePreview()">
+          <!-- Populated by Google Sheets -->
           <option value="Crimson">Red</option>
-          <option value="White">White</option>
-          <option value="Black">Solid Black</option>
         </select>
       </div>
 
@@ -194,18 +190,16 @@
       <div class="form-group">
         <label>Select Toy Model:</label>
         <select id="flexiModel" onchange="updateFlexiPreview()">
-          <option value="50">Flexi Rex (₱50)</option>
-          <option value="60">Flexi Octopus (₱60)</option>
-          <option value="55">Articulated Shark (₱55)</option>
+          <!-- Populated by Google Sheets -->
+          <option value="50|🦖">Flat Flexi Rex (₱50)</option>
         </select>
       </div>
 
       <div class="form-group">
         <label>Select Color:</label>
         <select id="flexiColor">
+          <!-- Populated by Google Sheets -->
           <option>Solid Black</option>
-          <option>White</option>
-          <option>Red</option>
         </select>
       </div>
 
@@ -370,6 +364,11 @@
 
   <script>
     // ==========================================
+    // DATABASE LINK - PASTE YOUR PUBLISHED CSV HERE
+    // ==========================================
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOPhOugHaenJl1rv7FQ61TV85bXd1B69yG0x5NJc_r8_v4Yk3zscQYp3ChYYfoF2FBIjU8bXYYYh5i/pub?gid=0&single=true&output=csv";
+    
+    // ==========================================
     // STORE ORDERS FORM (Keychains & Flexi Toys)
     // ==========================================
     const GOOGLE_FORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSfBxjKhCDNF5sflxkgUR0EVeQgyB4Xlf2TH3x1jQjKndqaK5A/viewform"; 
@@ -383,11 +382,7 @@
     const CAD_ENTRY_ID_NAME = "entry.1081847241"; 
     const CAD_ENTRY_ID_ADDRESS = "entry.261614978"; 
     const CAD_ENTRY_ID_DESC = "entry.351512784"; 
-    
-    // SECTION 4 GOOGLE FORM PRICE RECEIPT FIELD ID
     const CAD_ENTRY_ID_TOTAL = "entry.1517691125"; 
-    // ==========================================
-
 
     function switchView(viewId) {
       document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -396,6 +391,64 @@
     }
 
     let myCart = [];
+
+    // --- DYNAMIC DATABASE LOGIC ---
+    async function loadDynamicInventory() {
+      try {
+        let response = await fetch(SHEET_CSV_URL);
+        let csvText = await response.text();
+        let lines = csvText.split('\n');
+
+        let activeColors = [];
+        let activeFlexis = [];
+
+        // Skip the header row (i=1)
+        for(let i = 1; i < lines.length; i++) {
+          let row = lines[i].split(',');
+          if(row.length < 5) continue; // Skip broken rows
+          
+          let category = row[0].trim();
+          let name = row[1].trim();
+          let value = row[2].trim();
+          let icon = row[3].trim();
+          let status = row[4].trim().toUpperCase();
+
+          if(status === "ACTIVE") {
+            if(category === "Color") activeColors.push({name: name, value: value});
+            if(category === "Flexi") activeFlexis.push({name: name, price: value, icon: icon});
+          }
+        }
+
+        // Apply dynamic data to menus
+        if(activeColors.length > 0) {
+          let colorDropdowns = ['singleBg', 'singleFg', 'plateBg', 'plateFg', 'flexiColor'];
+          colorDropdowns.forEach(id => {
+            let selectBox = document.getElementById(id);
+            selectBox.innerHTML = ""; // Clear out static defaults
+            activeColors.forEach(c => {
+              let opt = document.createElement('option');
+              opt.value = (id === 'flexiColor') ? c.name : c.value;
+              opt.innerText = c.name;
+              selectBox.appendChild(opt);
+            });
+          });
+        }
+
+        if(activeFlexis.length > 0) {
+          let flexiBox = document.getElementById('flexiModel');
+          flexiBox.innerHTML = ""; // Clear out static defaults
+          activeFlexis.forEach(f => {
+            let opt = document.createElement('option');
+            opt.value = `${f.price}|${f.icon}`; // Store both price and emoji hidden in the value
+            opt.innerText = `${f.name} (₱${f.price})`;
+            flexiBox.appendChild(opt);
+          });
+        }
+
+      } catch (error) {
+        console.log("Could not load Google Sheet, falling back to static offline menu.");
+      }
+    }
 
     // --- PREVIEW LOGIC ---
     function updateSinglePreview() {
@@ -445,11 +498,13 @@
     function updateFlexiPreview() {
       let qty = Math.max(1, parseInt(document.getElementById('flexiQty').value) || 1);
       document.getElementById('flexiQty').value = qty;
-      let modelSelect = document.getElementById('flexiModel');
-      let pricePerItem = parseInt(modelSelect.value);
       
-      let iconMap = { "50": "🦖", "60": "🐙", "55": "🦈" };
-      document.getElementById('flexiPreviewIcon').innerText = iconMap[pricePerItem] || "🧸";
+      let modelSelect = document.getElementById('flexiModel');
+      // Extract the price and the emoji hidden in our dynamic value string
+      let [priceStr, iconStr] = modelSelect.value.split('|'); 
+      let pricePerItem = parseInt(priceStr);
+      
+      document.getElementById('flexiPreviewIcon').innerText = iconStr || "🧸";
       document.getElementById('flexiPriceDisplay').innerText = "₱" + (qty * pricePerItem) + ".00";
     }
 
@@ -478,7 +533,7 @@
       else if(type === 'flexi') {
         let modelDropdown = document.getElementById('flexiModel');
         let modelName = modelDropdown.options[modelDropdown.selectedIndex].text.split(" (")[0];
-        let pricePerItem = parseInt(modelDropdown.value);
+        let pricePerItem = parseInt(modelDropdown.value.split('|')[0]); // Parse dynamic price
         let color = document.getElementById('flexiColor').value;
         let qty = parseInt(document.getElementById('flexiQty').value);
         myCart.push({ name: `${qty}x ${modelName}`, details: `Color: ${color}`, price: (qty * pricePerItem) });
@@ -515,15 +570,17 @@
         sendToGoogleForm(customerDetails, orderData);
       }
       else if(type === 'flexi') {
-        let model = document.getElementById('flexiModel').options[document.getElementById('flexiModel').selectedIndex].text.split(" (")[0];
+        let modelSelect = document.getElementById('flexiModel');
+        let modelName = modelSelect.options[modelSelect.selectedIndex].text.split(" (")[0];
+        let pricePerItem = parseInt(modelSelect.value.split('|')[0]); // Parse dynamic price
         let color = document.getElementById('flexiColor').value;
         let qty = parseInt(document.getElementById('flexiQty').value);
         let customerName = document.getElementById('flexiCustomerName').value.trim();
         if(!customerName) return alert("Please enter your name.");
-        let price = qty * parseInt(document.getElementById('flexiModel').value);
+        let price = qty * pricePerItem;
         
         let customerDetails = `Name: ${customerName}\nFulfillment: Direct Order (Contact for delivery)`;
-        let orderData = `ORDER: ${qty}x ${model}\nColor: ${color}\n\nTotal: ₱${price}`;
+        let orderData = `ORDER: ${qty}x ${modelName}\nColor: ${color}\n\nTotal: ₱${price}`;
         sendToGoogleForm(customerDetails, orderData);
       }
     }
@@ -622,7 +679,6 @@
       sendToGoogleForm(customerDetails, orderData);
     }
 
-    // --- CAD AUTO-CALCULATOR LOGIC ---
     function updateCadPrice() {
       let l = parseFloat(document.getElementById('cadL').value) || 0;
       let w = parseFloat(document.getElementById('cadW').value) || 0;
@@ -643,12 +699,10 @@
         return;
       }
 
-      // BUSINESS PARAMETERS
       const PRICE_PER_GRAM = 2.50; 
       const BASE_SETUP_FEE = 50;   
       const PLA_DENSITY = 1.24;    
 
-      // 1. Calculate Weight
       let surfaceAreaMm2 = 2 * ((l * w) + (l * h) + (w * h));
       let shellVolumeCm3 = (surfaceAreaMm2 * 1.0) / 1000;
       let shellWeight = shellVolumeCm3 * PLA_DENSITY;
@@ -662,22 +716,18 @@
       let estimatedWeightGrams = (shellWeight + infillWeight) * 0.90;
       estimatedWeightGrams = Math.max(1, Math.ceil(estimatedWeightGrams)); 
 
-      // 2. Calculate Pricing
       let estimatedBasePrice = BASE_SETUP_FEE + (estimatedWeightGrams * PRICE_PER_GRAM);
       let grandTotal = estimatedBasePrice + modelingFee + deliveryFee;
 
-      // 3. Calculate Timelines (Assuming ~12g per hour print speed)
       let printHours = Math.ceil(estimatedWeightGrams / 12);
       let timeString = printHours <= 1 ? "1 hour" : printHours + " hours";
 
-      // Calculate Turnaround Days based on Modeling Complexity
       let turnaround = "1-2 Days"; 
       if (modelingFee === 150) turnaround = "2-3 Days";
       else if (modelingFee === 350) turnaround = "3-4 Days";
       else if (modelingFee === 600) turnaround = "5-7 Days";
       else if (modelingFee === 1000) turnaround = "7-10 Days";
 
-      // Update UI Elements
       document.getElementById('cadWeightDisplay').innerText = "~" + estimatedWeightGrams + "g";
       document.getElementById('cadTimeDisplay').innerText = "~" + timeString;
       document.getElementById('cadTurnaroundDisplay').innerText = turnaround;
@@ -728,9 +778,10 @@
     }
 
     // ==========================================
-    // INITIALIZE PREVIEWS ON PAGE LOAD
+    // INITIALIZATION (Now waits for the Database!)
     // ==========================================
-    window.onload = function() {
+    window.onload = async function() {
+      await loadDynamicInventory(); // Forces the website to read your Google Sheet first!
       updateSinglePreview();
       updatePlatePreview();
       updateFlexiPreview();
