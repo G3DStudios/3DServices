@@ -1,55 +1,132 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>G3D Studios</title>
+  <title>G3D Studios | Custom Manufacturing</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 450px; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; position: relative;}
-    
-    h1 { text-align: center; color: #222; margin-top: 0; font-size: 24px; }
-    p.subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
-    
-    .menu-btn { display: block; width: 100%; padding: 18px; margin-bottom: 15px; background: #ffffff; border: 2px solid #e0e0e0; border-radius: 12px; text-align: left; cursor: pointer; transition: 0.2s; box-sizing: border-box; }
-    .menu-btn:hover { border-color: #007bff; background: #f8fbff; transform: translateY(-2px); }
-    .menu-btn strong { display: block; font-size: 18px; color: #333; }
-    .menu-btn span { display: block; margin-top: 4px; font-size: 13px; color: #777; }
+    :root {
+      --bg-color: #f8fafc;
+      --grid-line: #eaeff3;
+      --surface: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --primary: #2563eb;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --purple: #7c3aed;
+    }
 
-    .view { display: none; }
+    /* Subtle Engineering Grid */
+    body { 
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+      background-color: var(--bg-color); 
+      background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 24px 24px;
+      margin: 0; padding: 20px; display: flex; justify-content: center; 
+    }
+
+    .container { 
+      width: 100%; max-width: 460px; background: var(--surface); padding: 35px 30px; 
+      border-radius: 20px; box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06); 
+      overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.8);
+    }
+    
+    .logo-header { display: flex; align-items: center; justify-content: center; margin-bottom: 5px; color: var(--text-main); }
+    .logo-header svg { width: 28px; height: 28px; margin-right: 10px; color: var(--primary); }
+    h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    p.subtitle { text-align: center; color: var(--text-muted); margin-top: 5px; margin-bottom: 35px; font-size: 14px; font-weight: 500;}
+    
+    /* Sleek Flexbox Buttons */
+    .menu-btn { 
+      display: flex; align-items: center; width: 100%; padding: 16px; margin-bottom: 14px; 
+      background: var(--surface); border: 1px solid var(--border-color); border-left: 5px solid var(--border-color);
+      border-radius: 14px; text-align: left; cursor: pointer; transition: all 0.25s ease; box-sizing: border-box; 
+    }
+    .menu-btn:hover { 
+      transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04); 
+      background: #fafafc; border-top-color: var(--border-color); border-right-color: var(--border-color); border-bottom-color: var(--border-color);
+    }
+    
+    /* Icon and Chevron Styling */
+    .menu-icon { 
+      width: 44px; height: 44px; display: flex; justify-content: center; align-items: center;
+      background: #f1f5f9; border-radius: 10px; margin-right: 16px; color: #475569;
+      transition: background 0.3s ease;
+    }
+    .menu-icon svg { width: 22px; height: 22px; stroke-width: 2; }
+    .menu-btn:hover .menu-icon { background: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+
+    .menu-text { flex: 1; }
+    .menu-text strong { display: block; font-size: 16px; color: var(--text-main); margin-bottom: 4px; font-weight: 700;}
+    .menu-text span { display: block; font-size: 13px; color: var(--text-muted); line-height: 1.4; font-weight: 500;}
+    
+    .chevron { font-size: 24px; color: #cbd5e1; font-weight: 300; transition: transform 0.2s ease; margin-left: 10px;}
+    .menu-btn:hover .chevron { transform: translateX(4px); color: var(--text-muted); }
+
+    /* Crisp Edge Accents on Hover */
+    .btn-tag:hover { border-left-color: var(--primary); }
+    .btn-tag:hover .menu-icon { color: var(--primary); }
+    .btn-plate:hover { border-left-color: var(--success); }
+    .btn-plate:hover .menu-icon { color: var(--success); }
+    .btn-toy:hover { border-left-color: var(--warning); }
+    .btn-toy:hover .menu-icon { color: var(--warning); }
+    .btn-cad:hover { border-left-color: var(--purple); }
+    .btn-cad:hover .menu-icon { color: var(--purple); }
+
+    .view { display: none; animation: fadeIn 0.3s ease; }
     .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    .form-group { margin-bottom: 15px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; color: #444; font-size: 14px;}
-    input, select, textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; font-weight: bold; }
-    input:focus, select:focus, textarea:focus { border-color: #007bff; outline: none; }
+    /* Modern Forms */
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-weight: 700; margin-bottom: 8px; color: #334155; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;}
+    input, select, textarea { 
+      width: 100%; padding: 14px 16px; border: 1px solid var(--border-color); border-radius: 10px; 
+      box-sizing: border-box; font-size: 15px; font-weight: 600; color: var(--text-main);
+      background: #f8fafc; transition: all 0.2s ease; font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus { 
+      background: #ffffff; border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); 
+    }
     
-    .preview-canvas { text-align: center; margin: 20px 0 30px 0; display: flex; justify-content: center; align-items: center; min-height: 120px; }
+    .preview-canvas { text-align: center; margin: 25px 0 35px 0; display: flex; justify-content: center; align-items: center; min-height: 120px; }
 
-    .price-tag { text-align: center; font-size: 28px; font-weight: 900; color: #28a745; margin: 10px 0; }
-    .price-note { text-align: center; font-size: 12px; color: #888; margin-bottom: 15px; }
+    .price-tag { text-align: center; font-size: 32px; font-weight: 900; color: var(--success); margin: 15px 0; }
+    .price-note { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 20px; font-weight: 500;}
     
-    .button-group { display: flex; gap: 10px; margin-top: 10px; }
-    .action-btn { flex: 1; padding: 15px; background: #222; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s;}
-    .action-btn:hover { background: #444; }
-    .cart-add-btn { flex: 1; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s;}
-    .cart-add-btn:hover { background: #0056b3; }
-    .back-btn { width: 100%; padding: 12px; background: transparent; color: #666; border: none; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; text-decoration: underline; }
-
-    .floating-cart { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; width: 60px; height: 60px; border-radius: 30px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; transition: transform 0.2s; }
-    .floating-cart:hover { transform: scale(1.1); }
-    .cart-badge { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; font-size: 12px; font-weight: bold; width: 22px; height: 22px; border-radius: 11px; display: flex; justify-content: center; align-items: center; }
+    .button-group { display: flex; gap: 12px; margin-top: 15px; }
+    .action-btn, .cart-add-btn { 
+      flex: 1; padding: 16px; border: none; border-radius: 10px; font-size: 15px; 
+      font-weight: 700; cursor: pointer; transition: all 0.2s ease; 
+    }
+    .action-btn { background: var(--text-main); color: white; }
+    .action-btn:hover { background: #334155; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); }
+    .cart-add-btn { background: var(--primary); color: white; }
+    .cart-add-btn:hover { background: #1d4ed8; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
     
-    .cart-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-    .cart-item-info strong { display: block; font-size: 15px; color: #333; }
-    .cart-item-info span { font-size: 12px; color: #777; }
-    .cart-item-price { font-weight: bold; color: #28a745; margin-right: 15px; }
-    .remove-btn { background: #dc3545; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; font-weight: bold;}
+    .back-btn { 
+      width: 100%; padding: 14px; background: transparent; color: var(--text-muted); border: none; 
+      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 15px; border-radius: 8px;
+    }
+    .back-btn:hover { background: #f1f5f9; color: var(--text-main); }
 
-    .cart-summary { background: #f8fbff; border: 2px solid #cce5ff; padding: 15px; border-radius: 12px; margin-top: 20px; }
-    .summary-row { display: flex; justify-content: space-between; font-size: 14px; color: #555; margin-bottom: 8px; font-weight: bold;}
-    .summary-total { display: flex; justify-content: space-between; font-size: 20px; color: #222; font-weight: 900; margin-top: 10px; padding-top: 10px; border-top: 2px dashed #cce5ff; }
+    .floating-cart { position: fixed; bottom: 25px; right: 25px; background: var(--success); color: white; width: 64px; height: 64px; border-radius: 32px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 8px 25px rgba(22, 163, 74, 0.3); cursor: pointer; z-index: 1000; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .floating-cart:hover { transform: scale(1.08); }
+    .cart-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 12px; font-weight: 800; width: 24px; height: 24px; border-radius: 12px; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+    
+    .cart-item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+    .cart-item-info strong { display: block; font-size: 15px; color: var(--text-main); }
+    .cart-item-info span { font-size: 13px; color: var(--text-muted); margin-top: 4px;}
+    .cart-item-price { font-weight: 800; color: var(--success); margin-right: 15px; }
+    .remove-btn { background: #fee2e2; color: #ef4444; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: 800; transition: 0.2s;}
+    .remove-btn:hover { background: #ef4444; color: white; }
 
-    .flexi-icon-preview { font-size: 80px; background: #f4f7f6; padding: 15px 25px; border-radius: 20px; border: 4px solid #333; }
+    .cart-summary { background: #f8fafc; border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; margin-top: 25px; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-muted); margin-bottom: 10px; font-weight: 600;}
+    .summary-total { display: flex; justify-content: space-between; font-size: 20px; color: var(--text-main); font-weight: 900; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1; }
+
+    .flexi-icon-preview { font-size: 80px; background: #f8fafc; padding: 20px 30px; border-radius: 20px; border: 2px solid var(--border-color); }
   </style>
 </head>
 <body>
@@ -63,27 +140,59 @@
     
     <!-- MAIN MENU -->
     <div id="mainMenu" class="view active">
-      <h1>G3D Studios</h1>
-      <p class="subtitle">Local manufacturing & custom CAD.</p>
+      
+      <div class="logo-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <h1>G3D Studios</h1>
+      </div>
+      <p class="subtitle">Precision Manufacturing & Custom CAD.</p>
 
-      <button class="menu-btn" onclick="switchView('singleLetterView')">
-        <strong>Single Letter Tag (₱15)</strong>
-        <span>Geometric initial tag. Fast print.</span>
+      <button class="menu-btn btn-tag" onclick="switchView('singleLetterView')">
+        <div class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="3"></line></svg>
+        </div>
+        <div class="menu-text">
+          <strong>Single Letter Tag (₱15)</strong>
+          <span>Geometric initial tag. Fast print.</span>
+        </div>
+        <div class="chevron">›</div>
       </button>
 
-      <button class="menu-btn" onclick="switchView('nameplateView')">
-        <strong>Custom Full Nameplate (₱50+)</strong>
-        <span>Your full name embedded in a keychain.</span>
+      <button class="menu-btn btn-plate" onclick="switchView('nameplateView')">
+        <div class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="8" width="18" height="8" rx="2" ry="2"></rect><line x1="7" y1="12" x2="17" y2="12"></line></svg>
+        </div>
+        <div class="menu-text">
+          <strong>Custom Full Nameplate (₱50+)</strong>
+          <span>Your full name embedded in a keychain.</span>
+        </div>
+        <div class="chevron">›</div>
       </button>
 
-      <button class="menu-btn" onclick="switchView('flexiView')">
-        <strong>Flexi Toys Collection</strong>
-        <span>Articulated fidgets in any color.</span>
+      <button class="menu-btn btn-toy" onclick="switchView('flexiView')">
+        <div class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a2 2 0 0 1 2 2c0 1.1-.9 2-2 2H8c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h4c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2h-4a2 2 0 0 1-2-2v-4c0-1.1-.9-2-2-2H2c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2h4c1.1 0 2-.9 2-2V2z"></path></svg>
+        </div>
+        <div class="menu-text">
+          <strong>Flexi Toys Collection</strong>
+          <span>Articulated fidgets in any color.</span>
+        </div>
+        <div class="chevron">›</div>
       </button>
 
-      <button class="menu-btn" onclick="switchView('cadView')">
-        <strong>Custom CAD Engineering</strong>
-        <span>Specific electronic enclosures or mounts.</span>
+      <button class="menu-btn btn-cad" onclick="switchView('cadView')">
+        <div class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </div>
+        <div class="menu-text">
+          <strong>Custom CAD Engineering</strong>
+          <span>Specific electronic enclosures or mounts.</span>
+        </div>
+        <div class="chevron">›</div>
       </button>
     </div>
 
@@ -231,13 +340,13 @@
       </div>
 
       <div class="form-group">
-        <label style="color: #007bff;">Your Full Name:</label>
+        <label style="color: var(--primary);">Your Full Name:</label>
         <input type="text" id="cartCustomerName" placeholder="Required for your order...">
       </div>
 
       <div class="form-group" style="margin-top: 15px;">
         <label>Fulfillment Method:</label>
-        <select id="cartDeliveryOption" onchange="renderCart()" style="border-color: #007bff;">
+        <select id="cartDeliveryOption" onchange="renderCart()">
           <option value="0">Walk-in / Pick-up (Brgy. Calangay) - Free</option>
           <option value="15">Delivery: Brgy. Calangay (+₱15.00)</option>
           <option value="30">Delivery: Nearby Barangays in Santa Maria (+₱30.00)</option>
@@ -248,17 +357,17 @@
       </div>
 
       <div class="form-group" id="addressGroup" style="display: none;">
-        <label style="color: #dc3545;">Delivery Address / Meetup Point:</label>
+        <label style="color: #ef4444;">Delivery Address / Meetup Point:</label>
         <textarea id="deliveryAddress" rows="3" placeholder="Please provide your complete address..."></textarea>
       </div>
 
       <div class="cart-summary">
         <div class="summary-row"><span>Items Subtotal:</span> <span id="masterSubtotal">₱0.00</span></div>
         <div class="summary-row"><span>Delivery Fee:</span> <span id="masterFee">₱0.00</span></div>
-        <div class="summary-total"><span>TOTAL:</span> <span id="masterTotal" style="color: #28a745;">₱0.00</span></div>
+        <div class="summary-total"><span>TOTAL:</span> <span id="masterTotal" style="color: var(--success);">₱0.00</span></div>
       </div>
 
-      <button class="action-btn" onclick="checkoutMasterCart()" style="background: #28a745; margin-top:20px;">Checkout & Upload Receipt</button>
+      <button class="action-btn" onclick="checkoutMasterCart()" style="background: var(--success); margin-top:20px;">Checkout & Upload Receipt</button>
       <button class="back-btn" onclick="switchView('mainMenu')">Continue Shopping</button>
     </div>
 
@@ -284,7 +393,7 @@
       <!-- NEW: CHOOSE SERVICE TYPE WITH COMPLEXITY -->
       <div class="form-group">
         <label>Design Requirements & Modeling:</label>
-        <select id="cadServiceType" onchange="updateCadPrice()" style="border-color: #28a745;">
+        <select id="cadServiceType" onchange="updateCadPrice()" style="border-color: var(--success);">
           <option value="0">I have a ready 3D Model (.STL/.OBJ) - No Modeling Fee</option>
           <option value="150">Basic Modeling (+₱150.00)</option>
           <option value="350">Moderate Modeling (+₱350.00)</option>
@@ -294,20 +403,20 @@
       </div>
 
       <!-- COMPLEXITY INFO GUIDE -->
-      <div style="background: #fff8e1; border-left: 4px solid #ffc107; padding: 12px; font-size: 12px; color: #555; margin-bottom: 15px; border-radius: 0 8px 8px 0; line-height: 1.5;">
-        <strong style="color: #333;">Modeling Complexity Guide:</strong><br>
+      <div style="background: #fffbeb; border-left: 4px solid var(--warning); padding: 15px; font-size: 13px; color: #475569; margin-bottom: 15px; border-radius: 0 10px 10px 0; line-height: 1.5;">
+        <strong style="color: var(--text-main); display: block; margin-bottom: 5px;">Modeling Complexity Guide:</strong>
         • <b>Basic (₱150):</b> Simple geometric shapes, flat nameplates, or basic solid boxes.<br>
         • <b>Moderate (₱350):</b> Standard enclosures with specific port holes, brackets, or simple mechanical parts.<br>
         • <b>Complex (₱600):</b> Multi-part assemblies, curved/custom contours, or precise mounting tolerances.<br>
         • <b>Very Hard (₱1000):</b> Reverse engineering, organic/sculpted shapes, or highly intricate electronic housings.
       </div>
 
-      <div style="background: #f8fbff; border: 2px solid #cce5ff; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-        <label style="color: #007bff; margin-bottom: 10px;">Maximum Dimensions (mm):</label>
+      <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+        <label style="color: var(--primary); margin-bottom: 10px;">Maximum Dimensions (mm):</label>
         <div style="display: flex; gap: 10px;">
-          <input type="number" id="cadL" placeholder="Length" min="1" oninput="updateCadPrice()" style="width: 33%;">
-          <input type="number" id="cadW" placeholder="Width" min="1" oninput="updateCadPrice()" style="width: 33%;">
-          <input type="number" id="cadH" placeholder="Height" min="1" oninput="updateCadPrice()" style="width: 33%;">
+          <input type="number" id="cadL" placeholder="Length" min="1" oninput="updateCadPrice()" style="width: 33%; padding: 12px 10px;">
+          <input type="number" id="cadW" placeholder="Width" min="1" oninput="updateCadPrice()" style="width: 33%; padding: 12px 10px;">
+          <input type="number" id="cadH" placeholder="Height" min="1" oninput="updateCadPrice()" style="width: 33%; padding: 12px 10px;">
         </div>
       </div>
 
@@ -334,7 +443,7 @@
       <!-- DELIVERY OPTION FOR CAD -->
       <div class="form-group" style="margin-top: 15px;">
         <label>Fulfillment Method:</label>
-        <select id="cadDeliveryOption" onchange="updateCadPrice()" style="border-color: #007bff;">
+        <select id="cadDeliveryOption" onchange="updateCadPrice()">
           <option value="0">Walk-in / Pick-up (Brgy. Calangay) - Free</option>
           <option value="15">Delivery: Brgy. Calangay (+₱15.00)</option>
           <option value="30">Delivery: Nearby Barangays in Santa Maria (+₱30.00)</option>
@@ -346,14 +455,14 @@
 
       <div class="cart-summary" style="margin-top: 10px;">
         <div class="summary-row"><span>Est. Plastic Weight:</span> <span id="cadWeightDisplay">0g</span></div>
-        <div class="summary-row" style="color: #666;"><span>Est. Machine Time:</span> <span id="cadTimeDisplay">0 hrs</span></div>
-        <div class="summary-row" style="color: #007bff;"><span>Est. Turnaround:</span> <span id="cadTurnaroundDisplay">1-2 Days</span></div>
-        <div style="border-top: 1px solid #cce5ff; margin: 8px 0;"></div>
+        <div class="summary-row" style="color: var(--text-muted);"><span>Est. Machine Time:</span> <span id="cadTimeDisplay">0 hrs</span></div>
+        <div class="summary-row" style="color: var(--primary);"><span>Est. Turnaround:</span> <span id="cadTurnaroundDisplay">1-2 Days</span></div>
+        <div style="border-top: 1px solid var(--border-color); margin: 12px 0;"></div>
         <div class="summary-row"><span>Est. Print Base Cost:</span> <span id="cadBasePriceDisplay">₱0.00</span></div>
         <div class="summary-row"><span>3D Modeling Fee:</span> <span id="cadModelingFeeDisplay">₱0.00</span></div>
         <div class="summary-row"><span>Delivery Fee:</span> <span id="cadFeeDisplay">₱0.00</span></div>
-        <div class="summary-total"><span>GRAND TOTAL:</span> <span id="cadPriceDisplay" style="color: #28a745;">₱0.00</span></div>
-        <p style="font-size: 11px; color: #888; text-align: center; margin-top: 5px;">*Final print specs and timelines may adjust based on actual CAD geometry.</p>
+        <div class="summary-total"><span>GRAND TOTAL:</span> <span id="cadPriceDisplay" style="color: var(--success);">₱0.00</span></div>
+        <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-top: 10px;">*Final print specs and timelines may adjust based on actual CAD geometry.</p>
       </div>
 
       <button class="action-btn" onclick="orderCAD()">Proceed to Checkout</button>
@@ -431,6 +540,17 @@
               opt.innerText = c.name;
               selectBox.appendChild(opt);
             });
+
+            // --- FORCE DEFAULT FOREGROUND TO RED ---
+            if(id === 'singleFg' || id === 'plateFg') {
+              for(let j = 0; j < selectBox.options.length; j++) {
+                if(selectBox.options[j].value === 'Crimson') {
+                  selectBox.selectedIndex = j;
+                  break;
+                }
+              }
+            }
+            // ---------------------------------------
           });
         }
 
@@ -500,7 +620,7 @@
       document.getElementById('flexiQty').value = qty;
       
       let modelSelect = document.getElementById('flexiModel');
-      // Extract the price and the emoji hidden in our dynamic value string
+      if(modelSelect.options.length === 0) return;
       let [priceStr, iconStr] = modelSelect.value.split('|'); 
       let pricePerItem = parseInt(priceStr);
       
@@ -601,7 +721,7 @@
       container.innerHTML = "";
       
       if(myCart.length === 0) {
-        container.innerHTML = "<p style='text-align:center; color:#888;'>Your cart is empty.</p>";
+        container.innerHTML = "<p style='text-align:center; color: var(--text-muted); font-weight: 500;'>Your cart is empty.</p>";
         document.getElementById('masterSubtotal').innerText = "₱0.00";
         document.getElementById('masterFee').innerText = "₱0.00";
         document.getElementById('masterTotal').innerText = "₱0.00";
@@ -781,7 +901,7 @@
     // INITIALIZATION (Now waits for the Database!)
     // ==========================================
     window.onload = async function() {
-      await loadDynamicInventory(); // Forces the website to read your Google Sheet first!
+      await loadDynamicInventory(); 
       updateSinglePreview();
       updatePlatePreview();
       updateFlexiPreview();
