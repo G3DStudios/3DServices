@@ -895,7 +895,7 @@
         </select>
       </div>
 
-      <p class="price-tag">₱15.00</p>
+      <p class="price-tag" id="singlePriceDisplay">₱15.00</p>
       
       <div class="form-group">
         <label>Your Name:</label>
@@ -1069,6 +1069,13 @@
         • <b>Complex (₱600):</b> Multi-part assemblies, curved/custom contours, or precise mounting tolerances.<br>
         • <b>Very Hard (₱1000):</b> Reverse engineering, organic/sculpted shapes, or highly intricate electronic housings.
       </div>
+	  
+	  <div class="form-group">
+        <label>Filament Color:</label>
+        <select id="cadColor" onchange="updateCadPrice()">
+          <option value="Black">Solid Black</option>
+        </select>
+      </div>
 
       <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
         <label style="color: var(--primary); margin-bottom: 10px;">Maximum Dimensions (mm):</label>
@@ -1150,12 +1157,18 @@
 
     let myCart = [];
 
-    // --- TOAST NOTIFICATION ---
     function showToast(message) {
       let x = document.getElementById("toast");
       x.innerText = message;
       x.className = "show";
       setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+    }
+
+    // --- Helper to get extra color cost ---
+    function getExtraCost(selectId) {
+      let el = document.getElementById(selectId);
+      if(!el || el.selectedIndex === -1) return 0;
+      return parseFloat(el.options[el.selectedIndex].getAttribute('data-extra-cost')) || 0;
     }
 
     // --- DYNAMIC DATABASE LOGIC ---
@@ -1176,24 +1189,26 @@
           let category = row[0].trim();
           let name = row[1].trim();
           let value = row[2].trim();
-          let icon = row[3].trim();
-          let status = row[4].trim().toUpperCase();
+          let icon = row[3] ? row[3].trim() : "";
+          let status = row[4] ? row[4].trim().toUpperCase() : "";
+          let extraCost = row[5] ? parseFloat(row[5].trim()) || 0 : 0; // NEW 6TH COLUMN
 
           if(status === "ACTIVE") {
-            if(category === "Color") activeColors.push({name: name, value: value});
+            if(category === "Color") activeColors.push({name: name, value: value, extraCost: extraCost});
             if(category === "Flexi") activeFlexis.push({name: name, price: value, icon: icon});
           }
         }
 
         if(activeColors.length > 0) {
-          let colorDropdowns = ['singleBg', 'singleFg', 'plateBg', 'plateFg', 'flexiColor'];
+          let colorDropdowns = ['singleBg', 'singleFg', 'plateBg', 'plateFg', 'flexiColor', 'cadColor'];
           colorDropdowns.forEach(id => {
             let selectBox = document.getElementById(id);
             selectBox.innerHTML = ""; 
             activeColors.forEach(c => {
               let opt = document.createElement('option');
               opt.value = (id === 'flexiColor') ? c.name : c.value;
-              opt.innerText = c.name;
+              opt.innerText = c.extraCost > 0 ? `${c.name} (+₱${c.extraCost})` : c.name;
+              opt.setAttribute('data-extra-cost', c.extraCost);
               selectBox.appendChild(opt);
             });
 
@@ -1237,12 +1252,16 @@
       document.getElementById('singleBaseText').setAttribute('stroke', bg);
       document.getElementById('singleLoop').setAttribute('stroke', bg);
       document.getElementById('singleLoop').style.display = letter ? "block" : "none";
+
+      let cost = 15 + getExtraCost('singleBg') + getExtraCost('singleFg');
+      document.getElementById('singlePriceDisplay').innerText = "₱" + cost + ".00";
     }
 
     function calculatePlatePrice() {
       let text = document.getElementById('plateInput').value.trim();
       if(text.length === 0) return 0;
-      return 50 + (Math.max(0, text.length - 4) * 15);
+      let basePrice = 50 + (Math.max(0, text.length - 4) * 15);
+      return basePrice + getExtraCost('plateBg') + getExtraCost('plateFg');
     }
 
     function updatePlatePreview() {
@@ -1276,10 +1295,13 @@
       let modelSelect = document.getElementById('flexiModel');
       if(modelSelect.options.length === 0) return;
       let [priceStr, iconStr] = modelSelect.value.split('|'); 
-      let pricePerItem = parseInt(priceStr);
+      
+      let baseItemPrice = parseInt(priceStr);
+      let colorCost = getExtraCost('flexiColor');
+      let totalItemPrice = baseItemPrice + colorCost;
       
       document.getElementById('flexiPreviewIcon').innerText = iconStr || "🧸";
-      document.getElementById('flexiPriceDisplay').innerText = "₱" + (qty * pricePerItem) + ".00";
+      document.getElementById('flexiPriceDisplay').innerText = "₱" + (qty * totalItemPrice) + ".00";
     }
 
     // --- GOOGLE FORM SUBMISSION HELPER ---
@@ -1295,7 +1317,8 @@
         if(!letter) { showToast("Please type a letter."); return; }
         let bg = document.getElementById('singleBg').options[document.getElementById('singleBg').selectedIndex].text;
         let fg = document.getElementById('singleFg').options[document.getElementById('singleFg').selectedIndex].text;
-        myCart.push({ name: `Single Letter (${letter})`, details: `BG: ${bg}, Text: ${fg}`, price: 15 });
+        let cost = 15 + getExtraCost('singleBg') + getExtraCost('singleFg');
+        myCart.push({ name: `Single Letter (${letter})`, details: `BG: ${bg}, Text: ${fg}`, price: cost });
       } 
       else if(type === 'plate') {
         let text = document.getElementById('plateInput').value.trim().toUpperCase();
@@ -1307,10 +1330,11 @@
       else if(type === 'flexi') {
         let modelDropdown = document.getElementById('flexiModel');
         let modelName = modelDropdown.options[modelDropdown.selectedIndex].text.split(" (")[0];
-        let pricePerItem = parseInt(modelDropdown.value.split('|')[0]);
-        let color = document.getElementById('flexiColor').value;
+        let basePrice = parseInt(modelDropdown.value.split('|')[0]);
+        let colorCost = getExtraCost('flexiColor');
+        let colorText = document.getElementById('flexiColor').options[document.getElementById('flexiColor').selectedIndex].text;
         let qty = parseInt(document.getElementById('flexiQty').value);
-        myCart.push({ name: `${qty}x ${modelName}`, details: `Color: ${color}`, price: (qty * pricePerItem) });
+        myCart.push({ name: `${qty}x ${modelName}`, details: `Color: ${colorText}`, price: (qty * (basePrice + colorCost)) });
       }
       
       document.getElementById('cartBadge').innerText = myCart.length;
@@ -1325,9 +1349,10 @@
         if(!customerName) { showToast("Please enter your name."); return; }
         let bg = document.getElementById('singleBg').options[document.getElementById('singleBg').selectedIndex].text;
         let fg = document.getElementById('singleFg').options[document.getElementById('singleFg').selectedIndex].text;
+        let cost = 15 + getExtraCost('singleBg') + getExtraCost('singleFg');
         
         let customerDetails = `Name: ${customerName}\nFulfillment: Direct Order (Contact for delivery)`;
-        let orderData = `ORDER: Single Letter (${letter})\nBG: ${bg} | Text: ${fg}\n\nTotal: ₱15`;
+        let orderData = `ORDER: Single Letter (${letter})\nBG: ${bg} | Text: ${fg}\n\nTotal: ₱${cost}`;
         sendToGoogleForm(customerDetails, orderData);
       } 
       else if(type === 'plate') {
@@ -1346,15 +1371,16 @@
       else if(type === 'flexi') {
         let modelSelect = document.getElementById('flexiModel');
         let modelName = modelSelect.options[modelSelect.selectedIndex].text.split(" (")[0];
-        let pricePerItem = parseInt(modelSelect.value.split('|')[0]); 
-        let color = document.getElementById('flexiColor').value;
+        let basePrice = parseInt(modelSelect.value.split('|')[0]); 
+        let colorCost = getExtraCost('flexiColor');
+        let colorText = document.getElementById('flexiColor').options[document.getElementById('flexiColor').selectedIndex].text;
         let qty = parseInt(document.getElementById('flexiQty').value);
         let customerName = document.getElementById('flexiCustomerName').value.trim();
         if(!customerName) { showToast("Please enter your name."); return; }
-        let price = qty * pricePerItem;
+        let price = qty * (basePrice + colorCost);
         
         let customerDetails = `Name: ${customerName}\nFulfillment: Direct Order (Contact for delivery)`;
-        let orderData = `ORDER: ${qty}x ${modelName}\nColor: ${color}\n\nTotal: ₱${price}`;
+        let orderData = `ORDER: ${qty}x ${modelName}\nColor: ${colorText}\n\nTotal: ₱${price}`;
         sendToGoogleForm(customerDetails, orderData);
       }
     }
@@ -1490,7 +1516,8 @@
       let estimatedWeightGrams = (shellWeight + infillWeight) * 0.90;
       estimatedWeightGrams = Math.max(1, Math.ceil(estimatedWeightGrams)); 
 
-      let estimatedBasePrice = BASE_SETUP_FEE + (estimatedWeightGrams * PRICE_PER_GRAM);
+      let colorCost = getExtraCost('cadColor');
+      let estimatedBasePrice = BASE_SETUP_FEE + (estimatedWeightGrams * PRICE_PER_GRAM) + colorCost;
       let grandTotal = estimatedBasePrice + modelingFee + deliveryFee;
 
       let printHours = Math.ceil(estimatedWeightGrams / 12);
@@ -1512,6 +1539,9 @@
     }
 
     function orderCAD() {
+	  const colorSelect = document.getElementById('cadColor');
+      const colorText = colorSelect.options[colorSelect.selectedIndex].text;
+	  
       const name = document.getElementById('cadName').value.trim();
       const address = document.getElementById('cadAddress').value.trim();
       const desc = document.getElementById('cadDesc').value.trim();
@@ -1545,15 +1575,12 @@
       if(!desc) { showToast("Please describe your project."); return; }
       if(!l || !w || !h) { showToast("Please enter the L x W x H dimensions."); return; }
       
-      let bundledDescription = `PROJECT GOAL:\n${desc}\n\n--- 3D PRINTING SPECS ---\nDimensions: ${l}mm x ${w}mm x ${h}mm\nInfill: ${infillText}\nPattern: ${pattern}\nEst. Weight: ${estWeight}\nEst. Machine Time: ${estTime}\n\n--- SERVICE TIMELINE ---\nRequirements: ${serviceText}\nPromised Turnaround: ${estTurnaround}\n\n--- COST BREAKDOWN ---\nPrint Base Price: ${estBasePrice}\nModeling Fee: ${estModelingFee}\nFulfillment: ${deliveryText}`;
+      let bundledDescription = `PROJECT GOAL:\n${desc}\n\n--- 3D PRINTING SPECS ---\nDimensions: ${l}mm x ${w}mm x ${h}mm\nInfill: ${infillText}\nPattern: ${pattern}\nColor: ${colorText}\nEst. Weight: ${estWeight}\nEst. Machine Time: ${estTime}\n\n--- SERVICE TIMELINE ---\nRequirements: ${serviceText}\nPromised Turnaround: ${estTurnaround}\n\n--- COST BREAKDOWN ---\nPrint Base Price: ${estBasePrice}\nModeling Fee: ${estModelingFee}\nFulfillment: ${deliveryText}`;
       
       let autoFillUrl = `${CAD_FORM_LINK}?usp=pp_url&${CAD_ENTRY_ID_NAME}=${encodeURIComponent(name)}&${CAD_ENTRY_ID_ADDRESS}=${encodeURIComponent(address)}&${CAD_ENTRY_ID_DESC}=${encodeURIComponent(bundledDescription)}&${CAD_ENTRY_ID_TOTAL}=${encodeURIComponent(grandTotalRaw)}`;
       window.location.href = autoFillUrl;
     }
 
-    // ==========================================
-    // INITIALIZATION 
-    // ==========================================
     window.onload = async function() {
       await loadDynamicInventory(); 
       updateSinglePreview();
