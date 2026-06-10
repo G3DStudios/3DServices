@@ -222,16 +222,17 @@
           
           <h3 style="margin-top: 20px;">Hardware (Units)</h3>
           <table id="invHardwareTable"></table>
-          
+
           <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border);">
             <strong>➕ Register New Hardware Asset</strong>
             <div class="flex-row" style="margin-top: 10px;">
-              <div class="form-group"><label>Asset Label Name</label><input type="text" id="newHwName" placeholder="e.g. Packaging Box"></div>
+              <div class="form-group"><label>Asset Label Name</label><input type="text" id="newHwName" placeholder="e.g. Plastic/Packaging"></div>
               <div class="form-group" style="display: flex; align-items: flex-end;">
                 <button class="btn" onclick="addHardwareAssetType()" style="width: 100%;">Add Row</button>
               </div>
             </div>
           </div>
+
         </div>
         
         <div class="card">
@@ -303,10 +304,10 @@
     let activeColors = [];
     let activeFlexis = [];
 
-    // Added the requested initial hardware setup
+    // Hardware now tracks Packaging and Freebies correctly
     let inventory = { filaments: {}, hardware: { "Keychain Rings": 100, "Plastic/Packaging": 100, "Freebies Sticker": 100 }, preprints: {} };
     let salesLog = [];
-    let incomingOrders = []; // New global for queue
+    let incomingOrders = []; // New array to hold Google Form submissions
     let revChart;
 
     function showToast(message) {
@@ -348,36 +349,37 @@
         let data = await res.json();
         if (data.status === "success") {
           if (data.inventory) {
-             // Safe merge to prevent crashes
-             if (data.inventory.hardware) {
-                Object.keys(data.inventory.hardware).forEach(k => { inventory.hardware[k] = data.inventory.hardware[k]; });
-             }
-             if (data.inventory.preprints) inventory.preprints = data.inventory.preprints;
+             inventory.hardware = data.inventory.hardware || inventory.hardware;
+             inventory.preprints = data.inventory.preprints || inventory.preprints;
              
              if(data.inventory.filaments) {
-               Object.keys(data.inventory.filaments).forEach(k => { inventory.filaments[k] = data.inventory.filaments[k]; });
+               Object.keys(data.inventory.filaments).forEach(k => {
+                 inventory.filaments[k] = data.inventory.filaments[k];
+               });
              }
           }
           if (data.sales) salesLog = data.sales;
-          if (data.incomingOrders) incomingOrders = data.incomingOrders; // Load new orders
+          if (data.incomingOrders) incomingOrders = data.incomingOrders; // Catch form submissions
         }
       } catch(e) { console.error("Database sync failed.", e); }
       
       activeColors.forEach(c => {
-        if(inventory.filaments[c] === undefined || isNaN(inventory.filaments[c])) { inventory.filaments[c] = 0; }
+        if(inventory.filaments[c] === undefined || isNaN(inventory.filaments[c])) {
+          inventory.filaments[c] = 0;
+        }
       });
 
       updateDashboard();
       renderInventory();
       renderRecords();
-      renderProductionBoard(); // Draw the kanban board
+      renderProductionBoard();
     }
 
     function syncCloudSale(newSale) { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_SALE", sale: newSale, inventory: inventory }) }); }
     function syncCloudInventory() { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_INVENTORY", inventory: inventory }) }); }
 
     // ==========================================
-    // NEW: EMAIL & PRODUCTION BOARD LOGIC
+    // NEW: KITCHEN DISPLAY SYSTEM & EMAILS
     // ==========================================
     function sendCustomerEmail(email, subject, message) {
       if(!email || email === "No Email") return;
@@ -565,6 +567,8 @@
     function safeDeductHardware(key, qty) {
       if(inventory.hardware[key] !== undefined) {
         inventory.hardware[key] = (parseInt(inventory.hardware[key]) || 0) - qty;
+      } else {
+        inventory.hardware[key] = -qty; // Create if it doesn't exist yet
       }
     }
 
@@ -681,7 +685,6 @@
         let color = val <= 0 ? 'var(--danger)' : (val < 300 ? 'var(--warning)' : 'inherit');
         let potentialPlates = Math.floor(val / 16);
         
-        // Exact stable script ID logic
         let safeId = "inv_" + item.replace(/[^a-zA-Z0-9]/g, '');
         
         filHTML += `<tr>
@@ -731,7 +734,7 @@
       syncCloudInventory(); 
     }
 
-    // NEW: Add Custom Hardware
+    // NEW: Add Hardware Button
     function addHardwareAssetType() {
       let inputField = document.getElementById("newHwName");
       let name = inputField.value.trim();
@@ -743,7 +746,7 @@
       renderInventory();
       updateDashboard();
       syncCloudInventory();
-      showToast(`Added: ${name}`);
+      showToast(`Added hardware: ${name}`);
     }
 
     function addPrePrint() {
@@ -823,7 +826,7 @@
           salesToday += sale.qty;
         }
         
-        if(sale.category === "Letter" && sale.specific && typeof sale.specific === 'string' && sale.specific.includes("Letter:")) {
+        if(sale.category === "Letter" && sale.specific.includes("Letter:")) {
           let parts = sale.specific.split(':');
           if(parts.length > 1) {
             let letterChar = parts[1].trim().split(' ')[0]; 
@@ -877,8 +880,8 @@
 
     // FIRE IT UP
     window.onload = async function() { 
-      await fetchStoreDatabase(); 
-      await loadCloudData(); 
+      await fetchStoreDatabase(); // 1. Pulls the Active Dropdown items from Sheet1
+      await loadCloudData();      // 2. Pulls the actual sales/stock from the Cloud Logic
     };
   </script>
 </body>
