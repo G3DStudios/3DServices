@@ -422,15 +422,18 @@
       let penHTML = ""; let proHTML = ""; let comHTML = ""; let scamHTML = "";
       
       incomingOrders.forEach(o => {
+        // o.name now holds the full "Customer Details" block
+        // o.details now holds the full "Order Summary" block
+        
         let ticketCard = `
           <div class="ticket">
-            <div class="ticket-header">${o.name}</div>
+            <!-- Added white-space: pre-wrap so the line breaks in your Customer Details look clean -->
+            <div class="ticket-header" style="white-space: pre-wrap; font-size: 14px; line-height: 1.4;">${o.name}</div>
             <div class="ticket-meta">
-              📧 ${o.email || 'No email'}<br>
-              🚚 ${o.method || 'Standard'}<br>
-              <a href="${o.screenshot}" target="_blank" style="color:var(--primary);">View GCash Receipt</a>
+              📧 ${o.email || 'No email registered'}<br>
+              <a href="${o.screenshot}" target="_blank" style="color:var(--primary); font-weight:bold; margin-top: 5px; display: inline-block;">🖼️ View GCash Attachment</a>
             </div>
-            <div class="ticket-details">${o.details}</div>
+            <div class="ticket-details" style="font-size: 13px;">${o.details}</div>
             <div class="ticket-actions">
         `;
 
@@ -448,13 +451,13 @@
         }
         else if (o.status === "Completed") {
           comHTML += ticketCard + `
-              <span style="color:var(--success); font-weight:bold; font-size:12px; padding:6px;">✓ Customer Notified</span>
+              <span style="color:var(--success); font-weight:bold; font-size:12px; padding:6px;">✓ Client Confirmed</span>
               <button class="btn btn-action btn-danger" style="background:none;" onclick="changeTicketStatus(${o.rowId}, 'DELETED')">Clear Ticket</button>
             </div></div>`;
         }
         else if (o.status === "Fake/Scam") {
           scamHTML += `<tr>
-            <td><strong>${o.name}</strong><br><small>${o.email}</small></td>
+            <td style="white-space: pre-wrap; font-size: 12px;"><strong>${o.name}</strong><br><small>${o.email}</small></td>
             <td style="font-family: monospace; font-size:11px;">${o.details}</td>
             <td><a href="${o.screenshot}" target="_blank">View Receipt</a></td>
             <td>
@@ -465,10 +468,10 @@
         }
       });
 
-      document.getElementById('queuePending').innerHTML = penHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No pending orders.</p>";
-      document.getElementById('queueProduction').innerHTML = proHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>Printers are idle.</p>";
-      document.getElementById('queueCompleted').innerHTML = comHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No completed orders.</p>";
-      document.getElementById('scamOrdersBody').innerHTML = scamHTML || "<tr><td colspan='4' style='text-align:center; color:var(--text-muted);'>Archive is clean.</td></tr>";
+      document.getElementById('queuePending').innerHTML = penHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No pending queue records.</p>";
+      document.getElementById('queueProduction').innerHTML = proHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>Printers are completely idle.</p>";
+      document.getElementById('queueCompleted').innerHTML = comHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No active staging tickets.</p>";
+      document.getElementById('scamOrdersBody').innerHTML = scamHTML || "<tr><td colspan='4' style='text-align:center; color:var(--text-muted);'>Archive list cleared.</td></tr>";
     }
 
     // ==========================================
