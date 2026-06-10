@@ -45,27 +45,21 @@
     
     .flex-row { display: flex; gap: 15px; }
     .flex-row > div { flex: 1; }
-
     .rank-list { list-style: none; padding: 0; margin: 0; }
     .rank-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600;}
     .rank-list li:last-child { border-bottom: none; }
 
-    #toast {
-      visibility: hidden; min-width: 250px; background-color: var(--sidebar); color: #fff; 
-      text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 1000; 
-      left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-      font-weight: bold; font-size: 14px;
-    }
+    #toast { visibility: hidden; min-width: 250px; background-color: var(--sidebar); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-weight: bold; font-size: 14px; }
     #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
     @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
     @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
 
-    /* Production Board CSS */
+    /* Production Board CSS Layout */
     .kanban-board { display: flex; gap: 20px; align-items: flex-start; }
     .kanban-col { flex: 1; background: #f1f5f9; border-radius: 12px; padding: 15px; border: 1px solid var(--border); }
     .kanban-col h3 { text-align: center; padding-bottom: 10px; border-bottom: 2px solid var(--border); margin-top: 0;}
     .ticket { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); }
-    .ticket-header { font-weight: 900; font-size: 15px; color: var(--primary); margin-bottom: 5px; }
+    .ticket-header { font-weight: 900; font-size: 14px; color: var(--sidebar); margin-bottom: 5px; white-space: pre-wrap; line-height: 1.4; }
     .ticket-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
     .ticket-details { font-family: monospace; font-size: 12px; background: #f8fafc; padding: 8px; border-radius: 4px; margin-bottom: 10px; white-space: pre-wrap; }
     .ticket-actions { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -97,13 +91,11 @@
           <h3>Total Revenue</h3>
           <div class="value" style="color: var(--success);" id="dashRevenue">₱0</div>
         </div>
-        
         <div class="card" style="border-left: 4px solid var(--danger);">
           <h3 style="color: var(--danger);">⚠️ Restock Alerts</h3>
           <ul class="rank-list" id="restockList" style="max-height: 100px; overflow-y: auto;"></ul>
         </div>
       </div>
-
       <div class="grid" style="grid-template-columns: 2fr 1fr;">
         <div class="card">
           <h3>Revenue Trend (Per Week)</h3>
@@ -162,12 +154,10 @@
             <label>Select Letter (A-Z):</label>
             <select id="saleLetterSelect"></select>
           </div>
-          
           <div class="form-group" id="saleFlexiGroup" style="display: none;">
             <label>Select Toy Model:</label>
             <select id="saleFlexiSelect"></select>
           </div>
-
           <div class="form-group" id="saleNameplateGroup" style="display: none;">
             <label>Engraved Name:</label>
             <input type="text" id="saleNameplateInput" placeholder="e.g., JUAN" style="text-transform: uppercase;">
@@ -222,7 +212,7 @@
           
           <h3 style="margin-top: 20px;">Hardware (Units)</h3>
           <table id="invHardwareTable"></table>
-
+          
           <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border);">
             <strong>➕ Register New Hardware Asset</strong>
             <div class="flex-row" style="margin-top: 10px;">
@@ -232,7 +222,6 @@
               </div>
             </div>
           </div>
-
         </div>
         
         <div class="card">
@@ -295,19 +284,14 @@
   </div>
 
   <script>
-    // ==========================================
-    // 1. CLOUD CONNECTION & DATA SYNC
-    // ==========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbzLnBL3Jqhry3Ucge-DwdIxD1X3aGrMGYITsNwMqqIllfPjQMukj1aV5DZ7Ar1CGEP9PA/exec";
     const STOREFRONT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOPhOugHaenJl1rv7FQ61TV85bXd1B69yG0x5NJc_r8_v4Yk3zscQYp3ChYYfoF2FBIjU8bXYYYh5i/pub?gid=0&single=true&output=csv";
 
     let activeColors = [];
     let activeFlexis = [];
-
-    // Hardware now tracks Packaging and Freebies correctly
     let inventory = { filaments: {}, hardware: { "Keychain Rings": 100, "Plastic/Packaging": 100, "Freebies Sticker": 100 }, preprints: {} };
     let salesLog = [];
-    let incomingOrders = []; // New array to hold Google Form submissions
+    let incomingOrders = []; 
     let revChart;
 
     function showToast(message) {
@@ -317,16 +301,46 @@
       setTimeout(function(){ toastEl.className = toastEl.className.replace("show", ""); }, 3500);
     }
 
+    function cleanUpDatabase() {
+      if(!inventory.hardware) inventory.hardware = {};
+      if(!inventory.preprints) inventory.preprints = {};
+      if(!inventory.filaments) inventory.filaments = {};
+
+      const migrations = { "Black": "Black PLA", "White": "White PLA", "Red": "Red PLA", "Gray": "Limited Gray PLA" };
+      for (let oldKey in migrations) {
+        if (inventory.filaments[oldKey] !== undefined) {
+          inventory.filaments[migrations[oldKey]] = (inventory.filaments[migrations[oldKey]] || 0) + parseFloat(inventory.filaments[oldKey]);
+          delete inventory.filaments[oldKey];
+        }
+      }
+      
+      const standardFils = ["Black PLA", "White PLA", "Red PLA", "Limited Gray PLA"];
+      standardFils.forEach(f => {
+        if (inventory.filaments[f] === undefined || isNaN(inventory.filaments[f]) || inventory.filaments[f] === null) {
+          inventory.filaments[f] = 0;
+        }
+      });
+
+      // Secure core metrics against missing items
+      const targetHW = ["Keychain Rings", "Plastic/Packaging", "Freebies Sticker"];
+      targetHW.forEach(h => {
+        if (inventory.hardware[h] === undefined) inventory.hardware[h] = 0;
+      });
+
+      Object.keys(inventory.filaments).forEach(k => {
+        if (k.trim() === "" || isNaN(inventory.filaments[k])) delete inventory.filaments[k];
+      });
+    }
+
     async function fetchStoreDatabase() {
       try {
         let res = await fetch(STOREFRONT_CSV_URL);
         let text = await res.text();
         let lines = text.split('\n');
-        
+        activeColors = []; activeFlexis = [];
         for(let i = 1; i < lines.length; i++) {
           let row = lines[i].split(',');
           if(row.length < 5) continue;
-          
           let cat = row[0].trim();
           let name = row[1].trim();
           let status = row[4].trim().toUpperCase();
@@ -349,26 +363,20 @@
         let data = await res.json();
         if (data.status === "success") {
           if (data.inventory) {
-             inventory.hardware = data.inventory.hardware || inventory.hardware;
-             inventory.preprints = data.inventory.preprints || inventory.preprints;
-             
-             if(data.inventory.filaments) {
-               Object.keys(data.inventory.filaments).forEach(k => {
-                 inventory.filaments[k] = data.inventory.filaments[k];
-               });
+             if (data.inventory.hardware) {
+               Object.keys(data.inventory.hardware).forEach(k => { inventory.hardware[k] = data.inventory.hardware[k]; });
+             }
+             if (data.inventory.preprints) inventory.preprints = data.inventory.preprints;
+             if (data.inventory.filaments) {
+               Object.keys(data.inventory.filaments).forEach(k => { inventory.filaments[k] = data.inventory.filaments[k]; });
              }
           }
           if (data.sales) salesLog = data.sales;
-          if (data.incomingOrders) incomingOrders = data.incomingOrders; // Catch form submissions
+          if (data.incomingOrders) incomingOrders = data.incomingOrders;
         }
       } catch(e) { console.error("Database sync failed.", e); }
       
-      activeColors.forEach(c => {
-        if(inventory.filaments[c] === undefined || isNaN(inventory.filaments[c])) {
-          inventory.filaments[c] = 0;
-        }
-      });
-
+      cleanUpDatabase();
       updateDashboard();
       renderInventory();
       renderRecords();
@@ -378,11 +386,8 @@
     function syncCloudSale(newSale) { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_SALE", sale: newSale, inventory: inventory }) }); }
     function syncCloudInventory() { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_INVENTORY", inventory: inventory }) }); }
 
-    // ==========================================
-    // NEW: KITCHEN DISPLAY SYSTEM & EMAILS
-    // ==========================================
     function sendCustomerEmail(email, subject, message) {
-      if(!email || email === "No Email") return;
+      if(!email || email === "No Email" || email === "No email registered") return;
       fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SEND_EMAIL", email: email, subject: subject, message: message }) });
     }
 
@@ -422,16 +427,12 @@
       let penHTML = ""; let proHTML = ""; let comHTML = ""; let scamHTML = "";
       
       incomingOrders.forEach(o => {
-        // o.name now holds the full "Customer Details" block
-        // o.details now holds the full "Order Summary" block
-        
         let ticketCard = `
           <div class="ticket">
-            <!-- Added white-space: pre-wrap so the line breaks in your Customer Details look clean -->
             <div class="ticket-header" style="white-space: pre-wrap; font-size: 14px; line-height: 1.4;">${o.name}</div>
             <div class="ticket-meta">
-              📧 ${o.email || 'No email registered'}<br>
-              <a href="${o.screenshot}" target="_blank" style="color:var(--primary); font-weight:bold; margin-top: 5px; display: inline-block;">🖼️ View GCash Attachment</a>
+              📧 ${o.email || 'No email'}<br>
+              <a href="${o.screenshot}" target="_blank" style="color:var(--primary); font-weight:bold; margin-top:5px; display:inline-block;">View GCash Receipt</a>
             </div>
             <div class="ticket-details" style="font-size: 13px;">${o.details}</div>
             <div class="ticket-actions">
@@ -451,7 +452,7 @@
         }
         else if (o.status === "Completed") {
           comHTML += ticketCard + `
-              <span style="color:var(--success); font-weight:bold; font-size:12px; padding:6px;">✓ Client Confirmed</span>
+              <span style="color:var(--success); font-weight:bold; font-size:12px; padding:6px;">✓ Customer Notified</span>
               <button class="btn btn-action btn-danger" style="background:none;" onclick="changeTicketStatus(${o.rowId}, 'DELETED')">Clear Ticket</button>
             </div></div>`;
         }
@@ -468,24 +469,20 @@
         }
       });
 
-      document.getElementById('queuePending').innerHTML = penHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No pending queue records.</p>";
-      document.getElementById('queueProduction').innerHTML = proHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>Printers are completely idle.</p>";
-      document.getElementById('queueCompleted').innerHTML = comHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No active staging tickets.</p>";
-      document.getElementById('scamOrdersBody').innerHTML = scamHTML || "<tr><td colspan='4' style='text-align:center; color:var(--text-muted);'>Archive list cleared.</td></tr>";
+      document.getElementById('queuePending').innerHTML = penHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No pending orders.</p>";
+      document.getElementById('queueProduction').innerHTML = proHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>Printers are idle.</p>";
+      document.getElementById('queueCompleted').innerHTML = comHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No completed orders.</p>";
+      document.getElementById('scamOrdersBody').innerHTML = scamHTML || "<tr><td colspan='4' style='text-align:center; color:var(--text-muted);'>Archive is clean.</td></tr>";
     }
 
-    // ==========================================
-    // 2. UI LOGIC & DYNAMIC DROPDOWNS
-    // ==========================================
     function populateDynamicDropdowns() {
       let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-      let letterHTML = "";
-      alphabet.forEach(l => { letterHTML += `<option value="${l}">${l}</option>`; });
-      document.getElementById('saleLetterSelect').innerHTML = letterHTML;
-      document.getElementById('addPreLetter').innerHTML = letterHTML;
+      let letterHTML = ""; alphabet.forEach(l => { letterHTML += `<option value="${l}">${l}</option>`; });
+      document.getElementById('saleLetterSelect').innerHTML = letterHTML; document.getElementById('addPreLetter').innerHTML = letterHTML;
 
+      let colorsToUse = activeColors.length > 0 ? activeColors : Object.keys(inventory.filaments);
       let colorHTML = "";
-      activeColors.forEach(c => { colorHTML += `<option value="${c}">${c}</option>`; });
+      colorsToUse.forEach(c => { colorHTML += `<option value="${c}">${c}</option>`; });
       
       document.getElementById('saleBaseColor').innerHTML = colorHTML;
       document.getElementById('saleTextColor').innerHTML = colorHTML;
@@ -505,8 +502,7 @@
     function switchTab(tabId) {
       document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      event.currentTarget.classList.add('active');
+      document.getElementById(tabId).classList.add('active'); event.currentTarget.classList.add('active');
       
       if(tabId === 'dashboard') updateDashboard();
       if(tabId === 'inventory') renderInventory();
@@ -516,33 +512,13 @@
 
     function updatePosUI() {
       const cat = document.getElementById('saleCategory').value;
-      const letterGroup = document.getElementById('saleLetterGroup');
-      const nameplateGroup = document.getElementById('saleNameplateGroup');
-      const flexiGroup = document.getElementById('saleFlexiGroup');
-      const textColGroup = document.getElementById('textColorGroup');
-      const standardGroup = document.getElementById('posStandardInputs');
-      const cadGroup = document.getElementById('posCadInputs');
-      const price = document.getElementById('salePrice');
-      
-      standardGroup.style.display = "block"; 
-      cadGroup.style.display = "none"; 
-      textColGroup.style.display = "block";
-      letterGroup.style.display = "none";
-      nameplateGroup.style.display = "none";
-      flexiGroup.style.display = "none";
+      document.getElementById('posStandardInputs').style.display = "block"; document.getElementById('posCadInputs').style.display = "none"; document.getElementById('textColorGroup').style.display = "block";
+      document.getElementById('saleLetterGroup').style.display = "none"; document.getElementById('saleNameplateGroup').style.display = "none"; document.getElementById('saleFlexiGroup').style.display = "none";
 
-      if(cat === "Letter") { 
-        letterGroup.style.display = "block"; price.value = 15; 
-      }
-      else if(cat === "Nameplate") { 
-        nameplateGroup.style.display = "block"; price.value = 50; 
-      }
-      else if(cat === "Flexi") { 
-        flexiGroup.style.display = "block"; price.value = 50; textColGroup.style.display = "none"; 
-      }
-      else if(cat === "CAD") { 
-        standardGroup.style.display = "none"; cadGroup.style.display = "block"; price.value = 150; 
-      }
+      if(cat === "Letter") { document.getElementById('saleLetterGroup').style.display = "block"; document.getElementById('salePrice').value = 15; }
+      else if(cat === "Nameplate") { document.getElementById('saleNameplateGroup').style.display = "block"; document.getElementById('salePrice').value = 50; }
+      else if(cat === "Flexi") { document.getElementById('saleFlexiGroup').style.display = "block"; document.getElementById('salePrice').value = 50; document.getElementById('textColorGroup').style.display = "none"; }
+      else if(cat === "CAD") { document.getElementById('posStandardInputs').style.display = "none"; document.getElementById('posCadInputs').style.display = "block"; document.getElementById('salePrice').value = 150; }
     }
 
     function updateAddPreUI() {
@@ -558,94 +534,59 @@
       }
     }
 
-    function getPrePrintKey(category, specific, baseColor, textColor) {
-      if(category === "Letter" || category === "Nameplate") {
-        return `${category}: ${specific} [${baseColor} / ${textColor}]`;
-      } else {
-        return `Flexi: ${specific} [${baseColor}]`;
-      }
-    }
-
-    // NEW: Safe Hardware Deductor
     function safeDeductHardware(key, qty) {
       if(inventory.hardware[key] !== undefined) {
         inventory.hardware[key] = (parseInt(inventory.hardware[key]) || 0) - qty;
-      } else {
-        inventory.hardware[key] = -qty; // Create if it doesn't exist yet
       }
     }
 
-    // ==========================================
-    // 3. CORE MATERIAL MATH & SALES LOGIC
-    // ==========================================
     function processSale() {
-      let cat = document.getElementById('saleCategory').value;
-      let specific = "";
-      
+      let cat = document.getElementById('saleCategory').value; let specific = "";
       if (cat === "Letter") { specific = document.getElementById('saleLetterSelect').value; }
       else if (cat === "Nameplate") { specific = document.getElementById('saleNameplateInput').value.toUpperCase().trim(); }
       else if (cat === "Flexi") { specific = document.getElementById('saleFlexiSelect').value; }
-
-      if(!specific && cat !== "CAD") { showToast("Please enter/select the specific details."); return; }
+      if(!specific && cat !== "CAD") { showToast("Please enter metrics."); return; }
 
       let price = parseFloat(document.getElementById('salePrice').value);
       let qty = parseInt(document.getElementById('saleQty').value);
       let baseCol = document.getElementById('saleBaseColor').value;
       let textCol = document.getElementById('saleTextColor').value;
       let cadCol = document.getElementById('cadColor').value;
-      
       if(qty <= 0 || isNaN(qty)) { showToast("Please enter a valid quantity."); return; }
 
-      let d = new Date();
-      let dateString = d.toLocaleDateString();
-      let weekNum = "Week " + Math.ceil(d.getDate() / 7) + ", " + d.toLocaleString('default', { month: 'short' });
+      let d = new Date(); let dateString = d.toLocaleDateString(); let weekNum = "Week " + Math.ceil(d.getDate() / 7) + ", " + d.toLocaleString('default', { month: 'short' });
       let logDetails = "";
 
       if (cat === "Letter") {
-        let prePrintKey = getPrePrintKey("Letter", specific, baseCol, textCol);
-        logDetails = prePrintKey;
-        
-        if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
-          inventory.preprints[prePrintKey] -= qty;
-          showToast(`Sale Logged! Deducted from Pre-Printed Stock.`);
+        logDetails = getPrePrintKey("Letter", specific, baseCol, textCol);
+        if (inventory.preprints[logDetails] && inventory.preprints[logDetails] >= qty) {
+          inventory.preprints[logDetails] -= qty;
         } else {
           inventory.filaments[baseCol] = (parseFloat(inventory.filaments[baseCol]) || 0) - (2.5 * qty);
           inventory.filaments[textCol] = (parseFloat(inventory.filaments[textCol]) || 0) - (1.5 * qty);
-          showToast(`Sale Logged! Printed on demand and materials deducted.`);
         }
         safeDeductHardware("Keychain Rings", qty);
         safeDeductHardware("Plastic/Packaging", qty);
         safeDeductHardware("Freebies Sticker", qty);
       } 
       else if (cat === "Nameplate") {
-        let prePrintKey = getPrePrintKey("Nameplate", specific, baseCol, textCol);
-        logDetails = prePrintKey;
-        
-        if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
-          inventory.preprints[prePrintKey] -= qty;
-          showToast(`Sale Logged! Deducted from Pre-Printed Stock.`);
+        logDetails = getPrePrintKey("Nameplate", specific, baseCol, textCol);
+        if (inventory.preprints[logDetails] && inventory.preprints[logDetails] >= qty) {
+          inventory.preprints[logDetails] -= qty;
         } else {
           let extraLetters = Math.max(0, specific.length - 4);
           let totalWeight = 16 + (extraLetters * 4);
-          let baseWeight = totalWeight * 0.75 * qty;
-          let textWeight = totalWeight * 0.25 * qty;
-          
-          inventory.filaments[baseCol] = (parseFloat(inventory.filaments[baseCol]) || 0) - baseWeight;
-          inventory.filaments[textCol] = (parseFloat(inventory.filaments[textCol]) || 0) - textWeight;
-          showToast(`Sale Logged! Printed on demand and materials deducted.`);
+          inventory.filaments[baseCol] = (parseFloat(inventory.filaments[baseCol]) || 0) - (totalWeight * 0.75 * qty);
+          inventory.filaments[textCol] = (parseFloat(inventory.filaments[textCol]) || 0) - (totalWeight * 0.25 * qty);
         }
         safeDeductHardware("Keychain Rings", qty);
       }
       else if (cat === "Flexi") {
-        let prePrintKey = getPrePrintKey("Flexi", specific, baseCol, null);
-        logDetails = prePrintKey;
-        
-        if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
-          inventory.preprints[prePrintKey] -= qty;
-          showToast(`Sale Logged! Deducted from Pre-Printed Stock.`);
+        logDetails = getPrePrintKey("Flexi", specific, baseCol, null);
+        if (inventory.preprints[logDetails] && inventory.preprints[logDetails] >= qty) {
+          inventory.preprints[logDetails] -= qty;
         } else {
           inventory.filaments[baseCol] = (parseFloat(inventory.filaments[baseCol]) || 0) - (35 * qty); 
-          showToast(`Sale Logged! Printed on demand and materials deducted.`);
         }
       }
       else if (cat === "CAD") {
@@ -654,47 +595,24 @@
         let h = parseFloat(document.getElementById('cadH').value) || 0;
         let infill = parseFloat(document.getElementById('cadInfill').value) || 15;
         if(l===0 || w===0 || h===0) { showToast("Enter CAD dimensions."); return; }
-        
-        const PLA_DENSITY = 1.24;
-        let surfaceAreaMm2 = 2 * ((l * w) + (l * h) + (w * h));
-        let shellWeight = (surfaceAreaMm2 / 1000) * PLA_DENSITY;
-        let innerVolumeCm3 = (Math.max(0, l-2) * Math.max(0, w-2) * Math.max(0, h-2)) / 1000;
-        let infillWeight = innerVolumeCm3 * PLA_DENSITY * (infill / 100);
-        let estimatedWeightGrams = Math.max(1, Math.ceil((shellWeight + infillWeight) * 0.90));
-        
-        let totalDeduct = estimatedWeightGrams * qty;
-        inventory.filaments[cadCol] = (parseFloat(inventory.filaments[cadCol]) || 0) - totalDeduct;
+        let eGrams = Math.max(1, Math.ceil((((2 * ((l * w) + (l * h) + (w * h))) / 1000) * 1.24) + (((Math.max(0, l - 2) * Math.max(0, w - 2) * Math.max(0, h - 2)) / 1000) * 1.24 * (infill / 100)) * 0.9));
+        inventory.filaments[cadCol] = (parseFloat(inventory.filaments[cadCol]) || 0) - (eGrams * qty);
         logDetails = `CAD: ${l}x${w}x${h}mm (${infill}%) - ${cadCol}`;
-        showToast(`CAD Processed: Deducted ${totalDeduct}g of ${cadCol}.`);
       }
 
       let newSaleObj = { date: dateString, week: weekNum, category: cat, specific: logDetails, qty: qty, revenue: price * qty };
-      salesLog.push(newSaleObj);
-      if(document.getElementById('saleNameplateInput')) document.getElementById('saleNameplateInput').value = "";
-      document.getElementById('saleQty').value = 1;
-
-      syncCloudSale(newSaleObj);
-      updateDashboard(); 
+      salesLog.push(newSaleObj); updateDashboard(); syncCloudSale(newSaleObj); showToast("Logged Successfully.");
     }
 
-    // ==========================================
-    // 4. INVENTORY MANAGEMENT
-    // ==========================================
     function renderInventory() {
+      let renderColors = activeColors.length > 0 ? activeColors : Object.keys(inventory.filaments);
       let filHTML = "<tr><th>Color</th><th>Grams Left</th><th>Potential Base Nameplates (16g)</th></tr>";
       
-      activeColors.forEach(item => {
+      renderColors.forEach(item => {
         let val = parseFloat(inventory.filaments[item]) || 0;
         let color = val <= 0 ? 'var(--danger)' : (val < 300 ? 'var(--warning)' : 'inherit');
-        let potentialPlates = Math.floor(val / 16);
-        
         let safeId = "inv_" + item.replace(/[^a-zA-Z0-9]/g, '');
-        
-        filHTML += `<tr>
-          <td>${item}</td>
-          <td><input type="number" step="any" id="${safeId}" value="${Number(val.toFixed(2))}" style="color:${color}; font-weight:bold; width:100px;"> g</td>
-          <td style="color: var(--text-muted);">~ ${Math.max(0, potentialPlates)} units</td>
-        </tr>`;
+        filHTML += `<tr><td>${item}</td><td><input type="number" step="any" id="${safeId}" value="${Number(val.toFixed(2))}" style="color:${color}; font-weight:bold; width:100px;"> g</td><td style="color: var(--text-muted);">~ ${Math.max(0, Math.floor(val/16))} units</td></tr>`;
       });
       document.getElementById('invFilamentTable').innerHTML = filHTML;
 
@@ -709,20 +627,15 @@
 
       let preHTML = "<tr><th>Exact Product Key</th><th>Stock</th><th>Action</th></tr>";
       Object.keys(inventory.preprints).forEach(item => {
-        let val = inventory.preprints[item];
-        let color = val <= 0 ? 'var(--danger)' : 'inherit';
-        preHTML += `<tr>
-          <td style="font-family: monospace; font-size: 11px;">${item}</td>
-          <td style="color:${color}; font-weight:bold;">${val}</td>
-          <td><button class="btn-danger" onclick="removePrePrint('${encodeURIComponent(item)}')">Remove</button></td>
-        </tr>`;
+        let val = inventory.preprints[item]; let color = val <= 0 ? 'var(--danger)' : 'inherit';
+        preHTML += `<tr><td style="font-family: monospace; font-size: 11px;">${item}</td><td style="color:${color}; font-weight:bold;">${val}</td><td><button class="btn-danger" onclick="removePrePrint('${encodeURIComponent(item)}')">Remove</button></td></tr>`;
       });
-      if(Object.keys(inventory.preprints).length === 0) preHTML += "<tr><td colspan='3'>No pre-printed stock.</td></tr>";
-      document.getElementById('invPreprintTable').innerHTML = preHTML;
+      document.getElementById('invPreprintTable').innerHTML = preHTML || "<tr><td colspan='3'>No pre-printed stock.</td></tr>";
     }
 
     function saveFilaments() {
-      activeColors.forEach(item => { 
+      let renderColors = activeColors.length > 0 ? activeColors : Object.keys(inventory.filaments);
+      renderColors.forEach(item => { 
         let safeId = "inv_" + item.replace(/[^a-zA-Z0-9]/g, '');
         inventory.filaments[item] = parseFloat(document.getElementById(safeId).value) || 0; 
       });
@@ -730,161 +643,74 @@
         let safeId = "inv_hw_" + item.replace(/[^a-zA-Z0-9]/g, '');
         inventory.hardware[item] = parseInt(document.getElementById(safeId).value) || 0; 
       });
-      
-      showToast("Inventory updated in Cloud!");
-      renderInventory();
-      updateDashboard();
-      syncCloudInventory(); 
+      showToast("Inventory updated!"); renderInventory(); updateDashboard(); syncCloudInventory(); 
     }
 
-    // NEW: Add Hardware Button
     function addHardwareAssetType() {
-      let inputField = document.getElementById("newHwName");
-      let name = inputField.value.trim();
+      let inputField = document.getElementById("newHwName"); let name = inputField.value.trim();
       if(!name) { showToast("Please input a name."); return; }
       if(inventory.hardware[name] !== undefined) { showToast("Asset already exists."); return; }
-      
-      inventory.hardware[name] = 0;
-      inputField.value = "";
-      renderInventory();
-      updateDashboard();
-      syncCloudInventory();
-      showToast(`Added hardware: ${name}`);
+      inventory.hardware[name] = 0; inputField.value = ""; renderInventory(); syncCloudInventory();
     }
 
     function addPrePrint() {
-      let cat = document.getElementById('addPreCat').value;
-      let baseCol = document.getElementById('addPreBaseColor').value;
-      let textCol = document.getElementById('addPreTextColor').value;
-      let qty = parseInt(document.getElementById('addPreQty').value) || 0;
-      
+      let cat = document.getElementById('addPreCat').value; let baseCol = document.getElementById('addPreBaseColor').value; let textCol = document.getElementById('addPreTextColor').value; let qty = parseInt(document.getElementById('addPreQty').value) || 0;
       if(qty <= 0 || isNaN(qty)) { showToast("Please enter a valid quantity."); return; }
-
-      let specific = "";
       let newKey = "";
 
       if(cat === "Letter") {
-        specific = document.getElementById('addPreLetter').value;
-        newKey = getPrePrintKey("Letter", specific, baseCol, textCol);
-        
+        let specific = document.getElementById('addPreLetter').value; newKey = getPrePrintKey("Letter", specific, baseCol, textCol);
         inventory.filaments[baseCol] = (parseFloat(inventory.filaments[baseCol]) || 0) - (2.5 * qty);
         inventory.filaments[textCol] = (parseFloat(inventory.filaments[textCol]) || 0) - (1.5 * qty);
-        safeDeductHardware("Keychain Rings", qty);
-        safeDeductHardware("Plastic/Packaging", qty);
-        safeDeductHardware("Freebies Sticker", qty);
+        safeDeductHardware("Keychain Rings", qty); safeDeductHardware("Plastic/Packaging", qty); safeDeductHardware("Freebies Sticker", qty);
       } else {
-        specific = document.getElementById('addPreFlexiSelect').value;
-        newKey = getPrePrintKey("Flexi", specific, baseCol, null);
-        
+        let specific = document.getElementById('addPreFlexiSelect').value; newKey = getPrePrintKey("Flexi", specific, baseCol, null);
         inventory.filaments[baseCol] = (parseFloat(inventory.filaments[baseCol]) || 0) - (35 * qty);
       }
-      
       inventory.preprints[newKey] = Math.max(0, (inventory.preprints[newKey] || 0) + qty);
-      
-      showToast("Successfully added to Pre-Prints!");
-      renderInventory();
-      updateDashboard();
-      syncCloudInventory(); 
+      showToast("Added to Pre-Prints!"); renderInventory(); updateDashboard(); syncCloudInventory(); 
     }
 
-    function removePrePrint(encodedKey) {
-      let key = decodeURIComponent(encodedKey);
-      delete inventory.preprints[key];
-      renderInventory();
-      updateDashboard(); 
-      syncCloudInventory();
-    }
-
-    // ==========================================
-    // 5. DASHBOARD & RECORDS
-    // ==========================================
+    function removePrePrint(encodedKey) { delete inventory.preprints[decodeURIComponent(encodedKey)]; renderInventory(); updateDashboard(); syncCloudInventory(); }
     function renderRecords() {
-      let html = "";
-      [...salesLog].reverse().forEach(sale => {
-        html += `<tr>
-          <td><strong>${sale.date}</strong><br><small style="color:var(--text-muted)">${sale.week}</small></td>
-          <td><span style="background:#e2e8f0; padding:4px 8px; border-radius:4px; font-size:12px;">${sale.category}</span></td>
-          <td style="font-family: monospace; font-size: 11px;">${sale.specific}</td>
-          <td>${sale.qty}</td>
-          <td style="color:var(--success); font-weight:bold;">₱${sale.revenue}</td>
-        </tr>`;
-      });
+      let html = ""; [...salesLog].reverse().forEach(sale => { html += `<tr><td><strong>${sale.date}</strong><br><small style="color:var(--text-muted)">${sale.week}</small></td><td><span style="background:#e2e8f0; padding:4px 8px; border-radius:4px; font-size:12px;">${sale.category}</span></td><td style="font-family: monospace; font-size: 11px;">${sale.specific}</td><td>${sale.qty}</td><td style="color:var(--success); font-weight:bold;">₱${sale.revenue}</td></tr>`; });
       document.getElementById('recordsTableBody').innerHTML = html;
     }
 
     function updateDashboard() {
-      let today = new Date(); 
-      let salesToday = 0; let totalRev = 0;
-      let letterCounts = {}; let weeklyRev = {};
+      let today = new Date(); let salesToday = 0; let totalRev = 0; let letterCounts = {}; let weeklyRev = {};
 
       salesLog.forEach(sale => {
         totalRev += sale.revenue;
-        
-        let saleDate = new Date(sale.date); 
-        if (
-          saleDate.getFullYear() === today.getFullYear() &&
-          saleDate.getMonth() === today.getMonth() &&
-          saleDate.getDate() === today.getDate()
-        ) {
-          salesToday += sale.qty;
+        if (sale.date) {
+          let saleDate = new Date(sale.date); 
+          if (!isNaN(saleDate) && saleDate.getFullYear() === today.getFullYear() && saleDate.getMonth() === today.getMonth() && saleDate.getDate() === today.getDate()) { salesToday += sale.qty; }
         }
-        
-        if(sale.category === "Letter" && sale.specific.includes("Letter:")) {
+        // PROTECTED EVALUATION LAYER: Prevents unhandled TypeErrors from missing rows
+        if(sale.category === "Letter" && sale.specific && typeof sale.specific === 'string' && sale.specific.includes("Letter:")) {
           let parts = sale.specific.split(':');
-          if(parts.length > 1) {
-            let letterChar = parts[1].trim().split(' ')[0]; 
-            letterCounts[letterChar] = (letterCounts[letterChar] || 0) + sale.qty;
-          }
+          if(parts.length > 1) { let letterChar = parts[1].trim().split(' ')[0]; letterCounts[letterChar] = (letterCounts[letterChar] || 0) + sale.qty; }
         }
-        weeklyRev[sale.week] = (weeklyRev[sale.week] || 0) + sale.revenue;
+        if (sale.week) weeklyRev[sale.week] = (weeklyRev[sale.week] || 0) + sale.revenue;
       });
 
-      document.getElementById('dashSalesToday').innerText = salesToday;
-      document.getElementById('dashRevenue').innerText = "₱" + totalRev;
+      document.getElementById('dashSalesToday').innerText = salesToday; document.getElementById('dashRevenue').innerText = "₱" + totalRev;
+      let topHtml = ""; Object.entries(letterCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(item => { topHtml += `<li>Letter ${item[0]} <span style="color:var(--primary); font-weight:bold;">${item[1]} sold</span></li>`; });
+      document.getElementById('topLettersList').innerHTML = topHtml || "<li><span style='color:var(--text-muted)'>No letters sold yet.</span></li>";
 
-      let sortedLetters = Object.entries(letterCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      let topHtml = "";
-      sortedLetters.forEach(item => { topHtml += `<li style="padding:10px 0; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;">Letter ${item[0]} <span style="color:var(--primary); font-weight:bold;">${item[1]} sold</span></li>`; });
-      if(sortedLetters.length === 0) topHtml = "<li><span style='color:var(--text-muted)'>No letters sold yet.</span></li>";
-      document.getElementById('topLettersList').innerHTML = topHtml;
+      let alertHtml = ""; let checkColors = activeColors.length > 0 ? activeColors : Object.keys(inventory.filaments);
+      checkColors.forEach(item => { let val = parseFloat(inventory.filaments[item]) || 0; if(val <= 0) alertHtml += `<li>${item} <span style="color:var(--danger);">OUT OF STOCK</span></li>`; else if(val < 300) alertHtml += `<li>${item} <span style="color:var(--warning);">Low (${Number(val.toFixed(2))}g)</span></li>`; });
+      Object.keys(inventory.hardware).forEach(item => { let val = parseInt(inventory.hardware[item]) || 0; if(val <= 0) alertHtml += `<li>${item} <span style="color:var(--danger);">OUT OF STOCK</span></li>`; else if(val < 20) alertHtml += `<li>${item} <span style="color:var(--warning);">Low (${val})</span></li>`; });
+      document.getElementById('restockList').innerHTML = alertHtml || `<li><span style="color:var(--success);">All stock levels are healthy!</span></li>`;
 
-      let alertHtml = "";
-      activeColors.forEach(item => {
-        let val = parseFloat(inventory.filaments[item]) || 0;
-        if(val <= 0) alertHtml += `<li>${item} <span style="color:var(--danger);">OUT OF STOCK (0g)</span></li>`;
-        else if(val < 300) alertHtml += `<li>${item} <span style="color:var(--warning);">Low (${Number(val.toFixed(2))}g)</span></li>`;
-      });
-      Object.keys(inventory.hardware).forEach(item => {
-        let val = parseInt(inventory.hardware[item]) || 0;
-        if(val <= 0) alertHtml += `<li>${item} <span style="color:var(--danger);">OUT OF STOCK (0)</span></li>`;
-        else if(val < 20) alertHtml += `<li>${item} <span style="color:var(--warning);">Low (${val})</span></li>`;
-      });
-      Object.keys(inventory.preprints).forEach(item => {
-        if(inventory.preprints[item] <= 0) {
-          alertHtml += `<li><span style="font-family:monospace; font-size:10px;">${item}</span> <span style="color:var(--danger);">OUT OF STOCK</span></li>`;
-        }
-      });
-
-      if(alertHtml === "") alertHtml = `<li><span style="color:var(--success);">All stock levels are healthy!</span></li>`;
-      document.getElementById('restockList').innerHTML = alertHtml;
-
-      let ctx = document.getElementById('revenueChart').getContext('2d');
-      if(revChart) revChart.destroy();
-      let labels = Object.keys(weeklyRev);
-      let data = Object.values(weeklyRev);
-      if(labels.length === 0) { labels = ["Week 1"]; data = [0]; }
-
-      revChart = new Chart(ctx, {
-        type: 'line',
-        data: { labels: labels, datasets: [{ label: 'Total Revenue (₱)', data: data, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 3, fill: true, tension: 0.3 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-      });
+      let ctx = document.getElementById('revenueChart').getContext('2d'); if(revChart) revChart.destroy();
+      let labels = Object.keys(weeklyRev); let data = Object.values(weeklyRev); if(labels.length === 0) { labels = ["Week 1"]; data = [0]; }
+      revChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Total Revenue (₱)', data: data, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 3, fill: true, tension: 0.3 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
     }
 
-    // FIRE IT UP
     window.onload = async function() { 
-      await fetchStoreDatabase(); // 1. Pulls the Active Dropdown items from Sheet1
-      await loadCloudData();      // 2. Pulls the actual sales/stock from the Cloud Logic
+      await fetchStoreDatabase(); 
+      await loadCloudData(); 
     };
   </script>
 </body>
