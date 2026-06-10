@@ -18,7 +18,7 @@
     .nav-btn { background: transparent; color: #cbd5e1; border: none; padding: 16px 24px; text-align: left; font-size: 15px; cursor: pointer; border-left: 4px solid transparent; font-weight: 600; }
     .nav-btn:hover, .nav-btn.active { background: #1e293b; color: white; border-left-color: #38bdf8; }
     
-    .main { flex: 1; padding: 30px; overflow-y: auto; }
+    .main { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
     .view { display: none; animation: fadeIn 0.2s ease; }
     .view.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -36,7 +36,8 @@
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #334155; }
     
-    .btn { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+    .btn:hover { filter: brightness(1.1); }
     .btn-success { background: var(--success); width: 100%; padding: 14px;}
     .btn-danger { background: #fee2e2; color: var(--danger); padding: 6px 10px; font-size: 12px;}
     
@@ -46,10 +47,25 @@
     .rank-list { list-style: none; padding: 0; margin: 0; }
     .rank-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600;}
     .rank-list li:last-child { border-bottom: none; }
+
+    /* TOAST NOTIFICATION STYLES */
+    #toast {
+      visibility: hidden; min-width: 250px; background-color: var(--sidebar); color: #fff; 
+      text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 1000; 
+      left: 50%; bottom: 30px; transform: translateX(-50%); box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+      font-weight: bold; font-size: 14px;
+    }
+    #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+    @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+    @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
   </style>
 </head>
 <body>
 
+  <!-- Toast Notification Container -->
+  <div id="toast">Message goes here</div>
+
+  <!-- SIDEBAR -->
   <div class="sidebar">
     <h2>G3D COMMAND</h2>
     <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dashboard & Alerts</button>
@@ -58,8 +74,10 @@
     <button class="nav-btn" onclick="switchTab('records')">📅 Historical Records</button>
   </div>
 
+  <!-- MAIN AREA -->
   <div class="main">
 
+    <!-- 1. DASHBOARD -->
     <div id="dashboard" class="view active">
       <h1>Business Overview</h1>
       <div class="grid">
@@ -74,8 +92,7 @@
         
         <div class="card" style="border-left: 4px solid var(--danger);">
           <h3 style="color: var(--danger);">⚠️ Restock Alerts</h3>
-          <ul class="rank-list" id="restockList" style="max-height: 100px; overflow-y: auto;">
-            </ul>
+          <ul class="rank-list" id="restockList" style="max-height: 100px; overflow-y: auto;"></ul>
         </div>
       </div>
 
@@ -91,6 +108,7 @@
       </div>
     </div>
 
+    <!-- 2. POINT OF SALE -->
     <div id="sales" class="view">
       <h1>Log a New Sale</h1>
       <div class="card" style="max-width: 600px;">
@@ -157,6 +175,7 @@
       </div>
     </div>
 
+    <!-- 3. INVENTORY MANAGER -->
     <div id="inventory" class="view">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h1>Inventory Control</h1>
@@ -164,6 +183,7 @@
       </div>
       
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <!-- Filaments -->
         <div class="card">
           <h3>Raw Filament Stock (Grams)</h3>
           <table id="invFilamentTable"></table>
@@ -171,12 +191,12 @@
           <table id="invHardwareTable"></table>
         </div>
         
+        <!-- Pre-Prints -->
         <div class="card">
           <h3>Pre-Printed Stock</h3>
           
           <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--border);">
             <strong>Add Stock via Dropdown</strong>
-            
             <div class="flex-row" style="margin-top: 10px;">
               <div class="form-group">
                 <label>Category</label>
@@ -185,12 +205,10 @@
                   <option value="Flexi">Flexi Toy</option>
                 </select>
               </div>
-              
               <div class="form-group" id="addPreLetterGroup">
                 <label>Letter</label>
                 <select id="addPreLetter"></select>
               </div>
-              
               <div class="form-group" id="addPreFlexiGroup" style="display:none;">
                 <label>Toy Type</label>
                 <input type="text" id="addPreFlexiText" placeholder="e.g., Slim T-Rex">
@@ -225,6 +243,7 @@
       </div>
     </div>
 
+    <!-- 4. HISTORICAL RECORDS -->
     <div id="records" class="view">
       <h1>Master Sales Ledger</h1>
       <div class="card">
@@ -254,9 +273,30 @@
     let salesLog = [];
     let revChart;
 
+    // --- Custom Toast Notification ---
+    function showToast(message) {
+      let toastEl = document.getElementById("toast");
+      toastEl.innerText = message;
+      toastEl.className = "show";
+      setTimeout(function(){ toastEl.className = toastEl.className.replace("show", ""); }, 3000);
+    }
+
+    // --- Clean Up Old/Broken Inventory Keys ---
+    function cleanUpDatabase() {
+      const oldKeys = ["Black", "White", "Red", "Gray"];
+      oldKeys.forEach(key => { delete inventory.filaments[key]; });
+      
+      Object.keys(inventory.filaments).forEach(k => {
+        if(isNaN(inventory.filaments[k])) inventory.filaments[k] = 0;
+      });
+    }
+
     // --- CLOUD SYNC FUNCTIONS ---
     async function loadCloudData() {
-      if(API_URL === "YOUR_WEB_APP_URL_HERE") return alert("Please paste your Google Apps Script URL in the code!");
+      if(API_URL === "YOUR_WEB_APP_URL_HERE") {
+        showToast("Please paste your Google Apps Script URL!");
+        return;
+      }
       
       document.getElementById('dashSalesToday').innerText = "Syncing...";
       try {
@@ -268,6 +308,7 @@
         }
       } catch(e) { console.error("Database sync failed.", e); }
       
+      cleanUpDatabase(); // Fixes ghost filament boxes
       updateDashboard();
       renderInventory();
       renderRecords();
@@ -275,7 +316,6 @@
 
     function syncCloudSale(newSale) { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_SALE", sale: newSale, inventory: inventory }) }); }
     function syncCloudInventory() { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_INVENTORY", inventory: inventory }) }); }
-
 
     // ==========================================
     // 2. UI LOGIC & DROPDOWN POPULATION
@@ -353,7 +393,6 @@
       }
     }
 
-
     // ==========================================
     // 3. CORE MATERIAL MATH & SALES LOGIC
     // ==========================================
@@ -381,45 +420,46 @@
         
         if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
           inventory.preprints[prePrintKey] -= qty;
-          alert(`Deducted ${qty}x from Pre-Printed Stock!`);
+          showToast(`Sale Logged! Deducted from Pre-Printed Stock.`);
         } else {
-          inventory.filaments[baseCol] -= (2.5 * qty);
-          inventory.filaments[textCol] -= (1.5 * qty);
-          alert(`Printed on demand. Deducted ${2.5 * qty}g ${baseCol} & ${1.5 * qty}g ${textCol}.`);
+          // Bulletproof math to prevent NaN
+          inventory.filaments[baseCol] = (inventory.filaments[baseCol] || 0) - (2.5 * qty);
+          inventory.filaments[textCol] = (inventory.filaments[textCol] || 0) - (1.5 * qty);
+          showToast(`Sale Logged! Printed on demand and materials deducted.`);
         }
-        inventory.hardware["Keychain Rings"] -= qty;
+        inventory.hardware["Keychain Rings"] = (inventory.hardware["Keychain Rings"] || 0) - qty;
       } 
       else if (cat === "Nameplate") {
-        if(!specific) return alert("Enter the nameplate text.");
+        if(!specific) { showToast("Enter the nameplate text."); return; }
         let prePrintKey = getPrePrintKey("Nameplate", specific, baseCol, textCol);
         logDetails = prePrintKey;
         
         if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
           inventory.preprints[prePrintKey] -= qty;
-          alert(`Deducted ${qty}x from Pre-Printed Stock!`);
+          showToast(`Sale Logged! Deducted from Pre-Printed Stock.`);
         } else {
           let extraLetters = Math.max(0, specific.length - 4);
           let totalWeight = 16 + (extraLetters * 4);
           let baseWeight = totalWeight * 0.75 * qty;
           let textWeight = totalWeight * 0.25 * qty;
           
-          inventory.filaments[baseCol] -= baseWeight;
-          inventory.filaments[textCol] -= textWeight;
-          alert(`Custom Print: Deducted ${baseWeight.toFixed(1)}g ${baseCol} & ${textWeight.toFixed(1)}g ${textCol}.`);
+          inventory.filaments[baseCol] = (inventory.filaments[baseCol] || 0) - baseWeight;
+          inventory.filaments[textCol] = (inventory.filaments[textCol] || 0) - textWeight;
+          showToast(`Sale Logged! Printed on demand and materials deducted.`);
         }
-        inventory.hardware["Keychain Rings"] -= qty;
+        inventory.hardware["Keychain Rings"] = (inventory.hardware["Keychain Rings"] || 0) - qty;
       }
       else if (cat === "Flexi") {
-        if(!specific) return alert("Enter flexi type.");
+        if(!specific) { showToast("Enter flexi type."); return; }
         let prePrintKey = getPrePrintKey("Flexi", specific, baseCol, null);
         logDetails = prePrintKey;
         
         if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
           inventory.preprints[prePrintKey] -= qty;
-          alert(`Deducted ${qty}x from Pre-Printed Stock!`);
+          showToast(`Sale Logged! Deducted from Pre-Printed Stock.`);
         } else {
-          inventory.filaments[baseCol] -= (35 * qty); 
-          alert(`Custom Print: Deducted ${35 * qty}g of ${baseCol}.`);
+          inventory.filaments[baseCol] = (inventory.filaments[baseCol] || 0) - (35 * qty); 
+          showToast(`Sale Logged! Printed on demand and materials deducted.`);
         }
       }
       else if (cat === "CAD") {
@@ -427,7 +467,7 @@
         let w = parseFloat(document.getElementById('cadW').value) || 0;
         let h = parseFloat(document.getElementById('cadH').value) || 0;
         let infill = parseFloat(document.getElementById('cadInfill').value) || 15;
-        if(l===0 || w===0 || h===0) return alert("Enter CAD dimensions.");
+        if(l===0 || w===0 || h===0) { showToast("Enter CAD dimensions."); return; }
         
         const PLA_DENSITY = 1.24;
         let surfaceAreaMm2 = 2 * ((l * w) + (l * h) + (w * h));
@@ -437,9 +477,9 @@
         let estimatedWeightGrams = Math.max(1, Math.ceil((shellWeight + infillWeight) * 0.90));
         
         let totalDeduct = estimatedWeightGrams * qty;
-        inventory.filaments[cadCol] -= totalDeduct;
+        inventory.filaments[cadCol] = (inventory.filaments[cadCol] || 0) - totalDeduct;
         logDetails = `CAD: ${l}x${w}x${h}mm (${infill}%) - ${cadCol}`;
-        alert(`CAD Processed: Deducted ${totalDeduct}g of ${cadCol}.`);
+        showToast(`CAD Processed: Deducted ${totalDeduct}g of ${cadCol}.`);
       }
 
       let newSaleObj = { date: dateString, week: weekNum, category: cat, specific: logDetails, qty: qty, revenue: price * qty };
@@ -448,7 +488,7 @@
       document.getElementById('saleQty').value = 1;
 
       syncCloudSale(newSaleObj);
-      updateDashboard(); // Instantly updates alerts
+      updateDashboard(); 
     }
 
     // ==========================================
@@ -494,9 +534,9 @@
       Object.keys(inventory.filaments).forEach(item => { inventory.filaments[item] = parseInt(document.getElementById('inv_' + item.replace(/\s+/g, '')).value) || 0; });
       Object.keys(inventory.hardware).forEach(item => { inventory.hardware[item] = parseInt(document.getElementById('inv_hw_' + item.replace(/\s+/g, '')).value) || 0; });
       
-      alert("Raw materials updated in Cloud!");
+      showToast("Raw materials updated in Cloud!");
       renderInventory();
-      updateDashboard(); // Updates alerts
+      updateDashboard();
       syncCloudInventory(); 
     }
 
@@ -506,48 +546,33 @@
       let textCol = document.getElementById('addPreTextColor').value;
       let qty = parseInt(document.getElementById('addPreQty').value) || 0;
       
-      if(qty <= 0) return alert("Please enter a valid quantity.");
+      if(qty <= 0) { showToast("Please enter a valid quantity."); return; }
 
       let specific = "";
       let newKey = "";
-      let alertMessage = "";
 
       if(cat === "Letter") {
         specific = document.getElementById('addPreLetter').value;
         newKey = getPrePrintKey("Letter", specific, baseCol, textCol);
         
-        // --- NEW: DEDUCT RAW MATERIALS FOR LETTERS ---
-        let baseGrams = 2.5 * qty;
-        let textGrams = 1.5 * qty;
-        
-        inventory.filaments[baseCol] -= baseGrams;
-        inventory.filaments[textCol] -= textGrams;
-        inventory.hardware["Keychain Rings"] -= qty; // Pre-assembling means using a ring!
-        
-        alertMessage = `Successfully added ${qty}x ${specific} to Pre-Prints!\n\nDeducted from Raw Stock:\n- ${baseGrams}g of ${baseCol}\n- ${textGrams}g of ${textCol}\n- ${qty} Keychain Rings`;
-
+        // Bulletproof deduction logic
+        inventory.filaments[baseCol] = (inventory.filaments[baseCol] || 0) - (2.5 * qty);
+        inventory.filaments[textCol] = (inventory.filaments[textCol] || 0) - (1.5 * qty);
+        inventory.hardware["Keychain Rings"] = (inventory.hardware["Keychain Rings"] || 0) - qty;
       } else {
         specific = document.getElementById('addPreFlexiText').value.toUpperCase().trim();
-        if(!specific) return alert("Please enter the Flexi Toy Type.");
+        if(!specific) { showToast("Please enter the Flexi Toy Type."); return; }
         newKey = getPrePrintKey("Flexi", specific, baseCol, null);
         
-        // --- NEW: DEDUCT RAW MATERIALS FOR FLEXIS ---
-        let flexiGrams = 35 * qty; // Using the 35g average we established
-        
-        inventory.filaments[baseCol] -= flexiGrams;
-        
-        alertMessage = `Successfully added ${qty}x ${specific} to Pre-Prints!\n\nDeducted from Raw Stock:\n- ${flexiGrams}g of ${baseCol}`;
+        inventory.filaments[baseCol] = (inventory.filaments[baseCol] || 0) - (35 * qty);
       }
       
-      // Add to Pre-print Inventory
       inventory.preprints[newKey] = Math.max(0, (inventory.preprints[newKey] || 0) + qty);
-      
       document.getElementById('addPreFlexiText').value = "";
       
-      // Show exactly what was deducted, then save
-      alert(alertMessage);
+      showToast("Successfully added to Pre-Prints & deducted raw materials!");
       renderInventory();
-      updateDashboard(); // Updates the low-stock alerts immediately
+      updateDashboard();
       syncCloudInventory(); 
     }
 
@@ -555,12 +580,12 @@
       let key = decodeURIComponent(encodedKey);
       delete inventory.preprints[key];
       renderInventory();
-      updateDashboard(); // Updates alerts
+      updateDashboard(); 
       syncCloudInventory();
     }
 
     // ==========================================
-    // 5. DASHBOARD, ALERTS & RECORDS
+    // 5. DASHBOARD & RECORDS
     // ==========================================
     function renderRecords() {
       let html = "";
@@ -577,21 +602,15 @@
     }
 
     function updateDashboard() {
-      // 1. Calculate Stats
-      let today = new Date(); // Get current date as an object
-      let salesToday = 0; 
-      let totalRev = 0;
-      let letterCounts = {}; 
-      let weeklyRev = {};
+      let today = new Date(); 
+      let salesToday = 0; let totalRev = 0;
+      let letterCounts = {}; let weeklyRev = {};
 
       salesLog.forEach(sale => {
         totalRev += sale.revenue;
         
-        // --- BULLETPROOF DATE CHECK ---
-        // Convert the Google Sheets date back into a real Date object
+        // Bulletproof timezone date check
         let saleDate = new Date(sale.date); 
-        
-        // Compare the exact Year, Month, and Day regardless of device timezone settings
         if (
           saleDate.getFullYear() === today.getFullYear() &&
           saleDate.getMonth() === today.getMonth() &&
@@ -600,7 +619,6 @@
           salesToday += sale.qty;
         }
         
-        // Count letters by looking for "Letter: X" pattern
         if(sale.category === "Letter" && sale.specific.includes("Letter:")) {
           let parts = sale.specific.split(':');
           if(parts.length > 1) {
@@ -614,28 +632,23 @@
       document.getElementById('dashSalesToday').innerText = salesToday;
       document.getElementById('dashRevenue').innerText = "₱" + totalRev;
 
-      // 2. Render Top 5 Letters
       let sortedLetters = Object.entries(letterCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
       let topHtml = "";
       sortedLetters.forEach(item => { topHtml += `<li style="padding:10px 0; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;">Letter ${item[0]} <span style="color:var(--primary); font-weight:bold;">${item[1]} sold</span></li>`; });
       if(sortedLetters.length === 0) topHtml = "<li><span style='color:var(--text-muted)'>No letters sold yet.</span></li>";
       document.getElementById('topLettersList').innerHTML = topHtml;
 
-      // 3. GENERATE RESTOCK ALERTS
       let alertHtml = "";
-      
       Object.keys(inventory.filaments).forEach(item => {
         let val = inventory.filaments[item];
         if(val <= 0) alertHtml += `<li>${item} <span style="color:var(--danger);">OUT OF STOCK (0g)</span></li>`;
         else if(val < 300) alertHtml += `<li>${item} <span style="color:var(--warning);">Low (${val}g)</span></li>`;
       });
-
       Object.keys(inventory.hardware).forEach(item => {
         let val = inventory.hardware[item];
         if(val <= 0) alertHtml += `<li>${item} <span style="color:var(--danger);">OUT OF STOCK (0)</span></li>`;
         else if(val < 20) alertHtml += `<li>${item} <span style="color:var(--warning);">Low (${val})</span></li>`;
       });
-
       Object.keys(inventory.preprints).forEach(item => {
         if(inventory.preprints[item] <= 0) {
           alertHtml += `<li><span style="font-family:monospace; font-size:10px;">${item}</span> <span style="color:var(--danger);">OUT OF STOCK</span></li>`;
@@ -645,7 +658,6 @@
       if(alertHtml === "") alertHtml = `<li><span style="color:var(--success);">All stock levels are healthy!</span></li>`;
       document.getElementById('restockList').innerHTML = alertHtml;
 
-      // 4. Draw Graph
       let ctx = document.getElementById('revenueChart').getContext('2d');
       if(revChart) revChart.destroy();
       let labels = Object.keys(weeklyRev);
@@ -659,7 +671,6 @@
       });
     }
 
-    // FIRE IT UP
     window.onload = function() { 
       populateAZDropdowns();
       loadCloudData(); 
