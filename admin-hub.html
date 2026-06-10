@@ -506,23 +506,48 @@
       let textCol = document.getElementById('addPreTextColor').value;
       let qty = parseInt(document.getElementById('addPreQty').value) || 0;
       
+      if(qty <= 0) return alert("Please enter a valid quantity.");
+
       let specific = "";
       let newKey = "";
+      let alertMessage = "";
 
       if(cat === "Letter") {
         specific = document.getElementById('addPreLetter').value;
         newKey = getPrePrintKey("Letter", specific, baseCol, textCol);
+        
+        // --- NEW: DEDUCT RAW MATERIALS FOR LETTERS ---
+        let baseGrams = 2.5 * qty;
+        let textGrams = 1.5 * qty;
+        
+        inventory.filaments[baseCol] -= baseGrams;
+        inventory.filaments[textCol] -= textGrams;
+        inventory.hardware["Keychain Rings"] -= qty; // Pre-assembling means using a ring!
+        
+        alertMessage = `Successfully added ${qty}x ${specific} to Pre-Prints!\n\nDeducted from Raw Stock:\n- ${baseGrams}g of ${baseCol}\n- ${textGrams}g of ${textCol}\n- ${qty} Keychain Rings`;
+
       } else {
         specific = document.getElementById('addPreFlexiText').value.toUpperCase().trim();
         if(!specific) return alert("Please enter the Flexi Toy Type.");
         newKey = getPrePrintKey("Flexi", specific, baseCol, null);
+        
+        // --- NEW: DEDUCT RAW MATERIALS FOR FLEXIS ---
+        let flexiGrams = 35 * qty; // Using the 35g average we established
+        
+        inventory.filaments[baseCol] -= flexiGrams;
+        
+        alertMessage = `Successfully added ${qty}x ${specific} to Pre-Prints!\n\nDeducted from Raw Stock:\n- ${flexiGrams}g of ${baseCol}`;
       }
       
+      // Add to Pre-print Inventory
       inventory.preprints[newKey] = Math.max(0, (inventory.preprints[newKey] || 0) + qty);
       
       document.getElementById('addPreFlexiText').value = "";
+      
+      // Show exactly what was deducted, then save
+      alert(alertMessage);
       renderInventory();
-      updateDashboard(); // Updates alerts
+      updateDashboard(); // Updates the low-stock alerts immediately
       syncCloudInventory(); 
     }
 
@@ -553,15 +578,30 @@
 
     function updateDashboard() {
       // 1. Calculate Stats
-      let today = new Date().toLocaleDateString();
-      let salesToday = 0; let totalRev = 0;
-      let letterCounts = {}; let weeklyRev = {};
+      let today = new Date(); // Get current date as an object
+      let salesToday = 0; 
+      let totalRev = 0;
+      let letterCounts = {}; 
+      let weeklyRev = {};
 
       salesLog.forEach(sale => {
         totalRev += sale.revenue;
-        if(sale.date === today) salesToday += sale.qty;
         
-        if(sale.category === "Letter") {
+        // --- BULLETPROOF DATE CHECK ---
+        // Convert the Google Sheets date back into a real Date object
+        let saleDate = new Date(sale.date); 
+        
+        // Compare the exact Year, Month, and Day regardless of device timezone settings
+        if (
+          saleDate.getFullYear() === today.getFullYear() &&
+          saleDate.getMonth() === today.getMonth() &&
+          saleDate.getDate() === today.getDate()
+        ) {
+          salesToday += sale.qty;
+        }
+        
+        // Count letters by looking for "Letter: X" pattern
+        if(sale.category === "Letter" && sale.specific.includes("Letter:")) {
           let parts = sale.specific.split(':');
           if(parts.length > 1) {
             let letterChar = parts[1].trim().split(' ')[0]; 
@@ -577,7 +617,7 @@
       // 2. Render Top 5 Letters
       let sortedLetters = Object.entries(letterCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
       let topHtml = "";
-      sortedLetters.forEach(item => { topHtml += `<li>Letter ${item[0]} <span style="color:var(--primary);">${item[1]} sold</span></li>`; });
+      sortedLetters.forEach(item => { topHtml += `<li style="padding:10px 0; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;">Letter ${item[0]} <span style="color:var(--primary); font-weight:bold;">${item[1]} sold</span></li>`; });
       if(sortedLetters.length === 0) topHtml = "<li><span style='color:var(--text-muted)'>No letters sold yet.</span></li>";
       document.getElementById('topLettersList').innerHTML = topHtml;
 
