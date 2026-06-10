@@ -13,26 +13,22 @@
     }
     body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
     
-    /* Sidebar */
     .sidebar { width: 260px; background: var(--sidebar); color: white; display: flex; flex-direction: column; padding-top: 20px; }
     .sidebar h2 { text-align: center; color: #38bdf8; font-weight: 800; letter-spacing: 1px; margin-bottom: 30px; }
     .nav-btn { background: transparent; color: #cbd5e1; border: none; padding: 16px 24px; text-align: left; font-size: 15px; cursor: pointer; border-left: 4px solid transparent; font-weight: 600; }
     .nav-btn:hover, .nav-btn.active { background: #1e293b; color: white; border-left-color: #38bdf8; }
     
-    /* Main Layout */
     .main { flex: 1; padding: 30px; overflow-y: auto; }
     .view { display: none; animation: fadeIn 0.2s ease; }
     .view.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     h1 { margin-top: 0; font-size: 26px; }
     
-    /* Cards & Grid */
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
     .card { background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
     .card h3 { margin: 0 0 10px 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 8px;}
     .value { font-size: 32px; font-weight: 900; color: var(--primary); }
     
-    /* Tables & Forms */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px;}
     th { font-size: 12px; color: var(--text-muted); text-transform: uppercase; background: #f8fafc; }
@@ -46,13 +42,17 @@
     
     .flex-row { display: flex; gap: 15px; }
     .flex-row > div { flex: 1; }
+
+    .rank-list { list-style: none; padding: 0; margin: 0; }
+    .rank-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600;}
+    .rank-list li:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
 
   <div class="sidebar">
     <h2>G3D COMMAND</h2>
-    <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dashboard & Graphs</button>
+    <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dashboard & Alerts</button>
     <button class="nav-btn" onclick="switchTab('sales')">🛒 Point of Sale</button>
     <button class="nav-btn" onclick="switchTab('inventory')">📦 Inventory Manager</button>
     <button class="nav-btn" onclick="switchTab('records')">📅 Historical Records</button>
@@ -71,6 +71,12 @@
           <h3>Total Revenue</h3>
           <div class="value" style="color: var(--success);" id="dashRevenue">₱0</div>
         </div>
+        
+        <div class="card" style="border-left: 4px solid var(--danger);">
+          <h3 style="color: var(--danger);">⚠️ Restock Alerts</h3>
+          <ul class="rank-list" id="restockList" style="max-height: 100px; overflow-y: auto;">
+            </ul>
+        </div>
       </div>
 
       <div class="grid" style="grid-template-columns: 2fr 1fr;">
@@ -80,7 +86,7 @@
         </div>
         <div class="card">
           <h3>Top 5 Popular Letters</h3>
-          <ul style="list-style:none; padding:0; margin:0;" id="topLettersList"></ul>
+          <ul class="rank-list" id="topLettersList"></ul>
         </div>
       </div>
     </div>
@@ -99,22 +105,27 @@
         </div>
         
         <div id="posStandardInputs">
-          <div class="form-group">
-            <label id="specificLabel">Select Letter:</label>
-            <input type="text" id="saleSpecific" placeholder="e.g., A" style="text-transform: uppercase;">
+          <div class="form-group" id="saleLetterGroup">
+            <label>Select Letter (A-Z):</label>
+            <select id="saleLetterSelect"></select>
+          </div>
+          
+          <div class="form-group" id="saleSpecificGroup" style="display: none;">
+            <label id="specificLabel">Engraved Name / Toy Type:</label>
+            <input type="text" id="saleSpecific" placeholder="e.g., JUAN" style="text-transform: uppercase;">
           </div>
           
           <div class="flex-row" id="colorSelectors">
             <div class="form-group">
               <label>Base / Primary Color:</label>
               <select id="saleBaseColor">
-                <option>Black</option><option>White</option><option>Red</option><option>Gray</option>
+                <option>Black PLA</option><option>White PLA</option><option>Red PLA</option><option>Limited Gray PLA</option>
               </select>
             </div>
             <div class="form-group" id="textColorGroup">
               <label>Text / Secondary Color:</label>
               <select id="saleTextColor">
-                <option>Red</option><option>White</option><option>Black</option><option>Gray</option>
+                <option>Red PLA</option><option>White PLA</option><option>Black PLA</option><option>Limited Gray PLA</option>
               </select>
             </div>
           </div>
@@ -131,21 +142,15 @@
             <div class="form-group">
               <label>Filament Used:</label>
               <select id="cadColor">
-                <option>Black</option><option>White</option><option>Red</option><option>Gray</option>
+                <option>Black PLA</option><option>White PLA</option><option>Red PLA</option><option>Limited Gray PLA</option>
               </select>
             </div>
           </div>
         </div>
 
         <div class="flex-row">
-          <div class="form-group">
-            <label>Total Price (₱):</label>
-            <input type="number" id="salePrice" value="15">
-          </div>
-          <div class="form-group">
-            <label>Quantity:</label>
-            <input type="number" id="saleQty" value="1">
-          </div>
+          <div class="form-group"><label>Total Price (₱):</label><input type="number" id="salePrice" value="15"></div>
+          <div class="form-group"><label>Quantity:</label><input type="number" id="saleQty" value="1"></div>
         </div>
 
         <button class="btn btn-success" onclick="processSale()">Record Sale & Deduct Materials</button>
@@ -161,24 +166,58 @@
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
         <div class="card">
           <h3>Raw Filament Stock (Grams)</h3>
-          <p style="font-size: 12px; color: var(--text-muted); margin-top:0;">Nameplates & custom jobs pull directly from here.</p>
           <table id="invFilamentTable"></table>
-          
           <h3 style="margin-top: 20px;">Hardware (Units)</h3>
           <table id="invHardwareTable"></table>
         </div>
         
         <div class="card">
           <h3>Pre-Printed Stock</h3>
-          <p style="font-size: 12px; color: var(--text-muted); margin-top:0;">Sales of these specific combos will deduct units instead of raw filament grams.</p>
           
-          <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--border);">
-            <strong>Add Pre-Print Batch</strong>
+          <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--border);">
+            <strong>Add Stock via Dropdown</strong>
+            
             <div class="flex-row" style="margin-top: 10px;">
-              <div class="form-group"><label>Type</label><input type="text" id="addPreName" placeholder="e.g., Letter A (Black/Red)"></div>
-              <div class="form-group"><label>Qty</label><input type="number" id="addPreQty" value="5"></div>
+              <div class="form-group">
+                <label>Category</label>
+                <select id="addPreCat" onchange="updateAddPreUI()">
+                  <option value="Letter">Letter Tag</option>
+                  <option value="Flexi">Flexi Toy</option>
+                </select>
+              </div>
+              
+              <div class="form-group" id="addPreLetterGroup">
+                <label>Letter</label>
+                <select id="addPreLetter"></select>
+              </div>
+              
+              <div class="form-group" id="addPreFlexiGroup" style="display:none;">
+                <label>Toy Type</label>
+                <input type="text" id="addPreFlexiText" placeholder="e.g., Slim T-Rex">
+              </div>
             </div>
-            <button class="btn" onclick="addPrePrint()" style="width: 100%; padding: 8px;">Add to Stock</button>
+
+            <div class="flex-row">
+              <div class="form-group">
+                <label>Base Color</label>
+                <select id="addPreBaseColor">
+                  <option>Black PLA</option><option>White PLA</option><option>Red PLA</option><option>Limited Gray PLA</option>
+                </select>
+              </div>
+              <div class="form-group" id="addPreTextGroup">
+                <label>Text Color</label>
+                <select id="addPreTextColor">
+                  <option>Red PLA</option><option>White PLA</option><option>Black PLA</option><option>Limited Gray PLA</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="flex-row">
+              <div class="form-group" style="flex: 0.5;"><label>Qty</label><input type="number" id="addPreQty" value="5"></div>
+              <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button class="btn" onclick="addPrePrint()" style="width: 100%;">Add to Stock</button>
+              </div>
+            </div>
           </div>
 
           <table id="invPreprintTable"></table>
@@ -191,13 +230,7 @@
       <div class="card">
         <table>
           <thead>
-            <tr>
-              <th>Date / Week</th>
-              <th>Category</th>
-              <th>Specifics</th>
-              <th>Qty</th>
-              <th>Revenue</th>
-            </tr>
+            <tr><th>Date / Week</th><th>Category</th><th>Specifics</th><th>Qty</th><th>Revenue</th></tr>
           </thead>
           <tbody id="recordsTableBody"></tbody>
         </table>
@@ -208,13 +241,13 @@
 
   <script>
     // ==========================================
-    // 1. CLOUD CONNECTION (PASTE YOUR URL HERE)
+    // 1. CLOUD CONNECTION
+    // !!! PASTE YOUR WEB APP URL BELOW !!!
     // ==========================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbz1UT-eKt6YXMp--DU3uG73AaPEJXcef-3HzPN8hG2TvWfDGPhzMTsNhoqtYfXcq6TwnA/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzLnBL3Jqhry3Ucge-DwdIxD1X3aGrMGYITsNwMqqIllfPjQMukj1aV5DZ7Ar1CGEP9PA/exec";
 
-    // Default Fallback Data (will be overwritten by cloud data)
     let inventory = {
-      filaments: { "Black": 1000, "White": 1000, "Red": 1000, "Gray": 1000 },
+      filaments: { "Black PLA": 1000, "White PLA": 1000, "Red PLA": 1000, "Limited Gray PLA": 1000 },
       hardware: { "Keychain Rings": 100 },
       preprints: {}
     };
@@ -223,11 +256,12 @@
 
     // --- CLOUD SYNC FUNCTIONS ---
     async function loadCloudData() {
+      if(API_URL === "YOUR_WEB_APP_URL_HERE") return alert("Please paste your Google Apps Script URL in the code!");
+      
       document.getElementById('dashSalesToday').innerText = "Syncing...";
       try {
         let res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "LOAD" }) });
         let data = await res.json();
-        
         if (data.status === "success") {
           if (data.inventory) inventory = data.inventory;
           if (data.sales) salesLog = data.sales;
@@ -239,18 +273,27 @@
       renderRecords();
     }
 
-    function syncCloudSale(newSale) {
-      fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_SALE", sale: newSale, inventory: inventory }) });
-    }
-
-    function syncCloudInventory() {
-      fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_INVENTORY", inventory: inventory }) });
-    }
+    function syncCloudSale(newSale) { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_SALE", sale: newSale, inventory: inventory }) }); }
+    function syncCloudInventory() { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_INVENTORY", inventory: inventory }) }); }
 
 
     // ==========================================
-    // 2. UI LOGIC
+    // 2. UI LOGIC & DROPDOWN POPULATION
     // ==========================================
+    function populateAZDropdowns() {
+      let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+      let saleLetterHTML = "";
+      let addPreLetterHTML = "";
+      
+      alphabet.forEach(letter => {
+        saleLetterHTML += `<option value="${letter}">${letter}</option>`;
+        addPreLetterHTML += `<option value="${letter}">${letter}</option>`;
+      });
+      
+      document.getElementById('saleLetterSelect').innerHTML = saleLetterHTML;
+      document.getElementById('addPreLetter').innerHTML = addPreLetterHTML;
+    }
+
     function switchTab(tabId) {
       document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -264,6 +307,8 @@
 
     function updatePosUI() {
       const cat = document.getElementById('saleCategory').value;
+      const specificGroup = document.getElementById('saleSpecificGroup');
+      const letterGroup = document.getElementById('saleLetterGroup');
       const label = document.getElementById('specificLabel');
       const input = document.getElementById('saleSpecific');
       const price = document.getElementById('salePrice');
@@ -273,10 +318,39 @@
       
       standardGroup.style.display = "block"; cadGroup.style.display = "none"; textColGroup.style.display = "block";
 
-      if(cat === "Letter") { label.innerText = "Select Letter:"; input.placeholder = "e.g., A"; price.value = 15; }
-      else if(cat === "Nameplate") { label.innerText = "Engraved Name:"; input.placeholder = "e.g., JUAN"; price.value = 50; }
-      else if(cat === "Flexi") { label.innerText = "Toy Type & Weight:"; input.placeholder = "e.g., Slim T-Rex"; price.value = 50; textColGroup.style.display = "none"; }
-      else if(cat === "CAD") { standardGroup.style.display = "none"; cadGroup.style.display = "block"; price.value = 150; }
+      if(cat === "Letter") { 
+        letterGroup.style.display = "block"; specificGroup.style.display = "none"; price.value = 15; 
+      }
+      else if(cat === "Nameplate") { 
+        letterGroup.style.display = "none"; specificGroup.style.display = "block"; label.innerText = "Engraved Name:"; input.placeholder = "e.g., JUAN"; price.value = 50; 
+      }
+      else if(cat === "Flexi") { 
+        letterGroup.style.display = "none"; specificGroup.style.display = "block"; label.innerText = "Toy Type:"; input.placeholder = "e.g., Slim T-Rex"; price.value = 50; textColGroup.style.display = "none"; 
+      }
+      else if(cat === "CAD") { 
+        standardGroup.style.display = "none"; cadGroup.style.display = "block"; price.value = 150; 
+      }
+    }
+
+    function updateAddPreUI() {
+      const cat = document.getElementById('addPreCat').value;
+      if(cat === "Letter") {
+        document.getElementById('addPreLetterGroup').style.display = "block";
+        document.getElementById('addPreFlexiGroup').style.display = "none";
+        document.getElementById('addPreTextGroup').style.display = "block";
+      } else {
+        document.getElementById('addPreLetterGroup').style.display = "none";
+        document.getElementById('addPreFlexiGroup').style.display = "block";
+        document.getElementById('addPreTextGroup').style.display = "none";
+      }
+    }
+
+    function getPrePrintKey(category, specific, baseColor, textColor) {
+      if(category === "Letter" || category === "Nameplate") {
+        return `${category}: ${specific} [${baseColor} / ${textColor}]`;
+      } else {
+        return `Flexi: ${specific} [${baseColor}]`;
+      }
     }
 
 
@@ -285,7 +359,11 @@
     // ==========================================
     function processSale() {
       let cat = document.getElementById('saleCategory').value;
-      let specific = document.getElementById('saleSpecific').value.toUpperCase().trim();
+      let specific = "";
+      
+      if (cat === "Letter") { specific = document.getElementById('saleLetterSelect').value; }
+      else { specific = document.getElementById('saleSpecific').value.toUpperCase().trim(); }
+
       let price = parseFloat(document.getElementById('salePrice').value);
       let qty = parseInt(document.getElementById('saleQty').value);
       let baseCol = document.getElementById('saleBaseColor').value;
@@ -298,9 +376,8 @@
       let logDetails = "";
 
       if (cat === "Letter") {
-        if(!specific) return alert("Enter a letter.");
-        logDetails = `Letter ${specific} (${baseCol}/${textCol})`;
-        let prePrintKey = `Letter ${specific} (${baseCol} Base, ${textCol} Text)`;
+        let prePrintKey = getPrePrintKey("Letter", specific, baseCol, textCol);
+        logDetails = prePrintKey;
         
         if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
           inventory.preprints[prePrintKey] -= qty;
@@ -314,28 +391,34 @@
       } 
       else if (cat === "Nameplate") {
         if(!specific) return alert("Enter the nameplate text.");
-        logDetails = `${specific} (${baseCol}/${textCol})`;
-        
-        let extraLetters = Math.max(0, specific.length - 4);
-        let totalWeight = 16 + (extraLetters * 4);
-        let baseWeight = totalWeight * 0.75 * qty;
-        let textWeight = totalWeight * 0.25 * qty;
-        
-        inventory.filaments[baseCol] -= baseWeight;
-        inventory.filaments[textCol] -= textWeight;
-        inventory.hardware["Keychain Rings"] -= qty;
-        alert(`Custom Print: Deducted ${baseWeight.toFixed(1)}g ${baseCol} & ${textWeight.toFixed(1)}g ${textCol}.`);
-      }
-      else if (cat === "Flexi") {
-        if(!specific) return alert("Enter flexi type.");
-        logDetails = `${specific} (${baseCol})`;
-        let prePrintKey = `${specific} (${baseCol})`;
+        let prePrintKey = getPrePrintKey("Nameplate", specific, baseCol, textCol);
+        logDetails = prePrintKey;
         
         if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
           inventory.preprints[prePrintKey] -= qty;
           alert(`Deducted ${qty}x from Pre-Printed Stock!`);
         } else {
-          inventory.filaments[baseCol] -= (35 * qty);
+          let extraLetters = Math.max(0, specific.length - 4);
+          let totalWeight = 16 + (extraLetters * 4);
+          let baseWeight = totalWeight * 0.75 * qty;
+          let textWeight = totalWeight * 0.25 * qty;
+          
+          inventory.filaments[baseCol] -= baseWeight;
+          inventory.filaments[textCol] -= textWeight;
+          alert(`Custom Print: Deducted ${baseWeight.toFixed(1)}g ${baseCol} & ${textWeight.toFixed(1)}g ${textCol}.`);
+        }
+        inventory.hardware["Keychain Rings"] -= qty;
+      }
+      else if (cat === "Flexi") {
+        if(!specific) return alert("Enter flexi type.");
+        let prePrintKey = getPrePrintKey("Flexi", specific, baseCol, null);
+        logDetails = prePrintKey;
+        
+        if (inventory.preprints[prePrintKey] && inventory.preprints[prePrintKey] >= qty) {
+          inventory.preprints[prePrintKey] -= qty;
+          alert(`Deducted ${qty}x from Pre-Printed Stock!`);
+        } else {
+          inventory.filaments[baseCol] -= (35 * qty); 
           alert(`Custom Print: Deducted ${35 * qty}g of ${baseCol}.`);
         }
       }
@@ -355,22 +438,18 @@
         
         let totalDeduct = estimatedWeightGrams * qty;
         inventory.filaments[cadCol] -= totalDeduct;
-        logDetails = `${l}x${w}x${h}mm (${infill}%) - ${cadCol}`;
+        logDetails = `CAD: ${l}x${w}x${h}mm (${infill}%) - ${cadCol}`;
         alert(`CAD Processed: Deducted ${totalDeduct}g of ${cadCol}.`);
       }
 
-      // Format the Sale Object
       let newSaleObj = { date: dateString, week: weekNum, category: cat, specific: logDetails, qty: qty, revenue: price * qty };
-      
-      // Update local UI immediately
       salesLog.push(newSaleObj);
       document.getElementById('saleSpecific').value = "";
       document.getElementById('saleQty').value = 1;
 
-      // SILENTLY BACKUP TO GOOGLE SHEETS
       syncCloudSale(newSaleObj);
+      updateDashboard(); // Instantly updates alerts
     }
-
 
     // ==========================================
     // 4. INVENTORY MANAGEMENT
@@ -379,12 +458,12 @@
       let filHTML = "<tr><th>Color</th><th>Grams Left</th><th>Potential Base Nameplates (16g)</th></tr>";
       Object.keys(inventory.filaments).forEach(item => {
         let val = inventory.filaments[item];
-        let color = val < 300 ? 'var(--danger)' : 'inherit';
+        let color = val <= 0 ? 'var(--danger)' : (val < 300 ? 'var(--warning)' : 'inherit');
         let potentialPlates = Math.floor(val / 16);
         filHTML += `<tr>
           <td>${item}</td>
-          <td><input type="number" id="inv_${item}" value="${val}" style="color:${color}; font-weight:bold; width:80px;"> g</td>
-          <td style="color: var(--text-muted);">~ ${potentialPlates} units</td>
+          <td><input type="number" id="inv_${item.replace(/\s+/g, '')}" value="${val}" style="color:${color}; font-weight:bold; width:100px;"> g</td>
+          <td style="color: var(--text-muted);">~ ${Math.max(0, potentialPlates)} units</td>
         </tr>`;
       });
       document.getElementById('invFilamentTable').innerHTML = filHTML;
@@ -392,18 +471,19 @@
       let hardHTML = "<tr><th>Item</th><th>Units Left</th></tr>";
       Object.keys(inventory.hardware).forEach(item => {
         let val = inventory.hardware[item];
-        hardHTML += `<tr><td>${item}</td><td><input type="number" id="inv_hw_${item}" value="${val}" style="width:80px;"></td></tr>`;
+        let color = val <= 0 ? 'var(--danger)' : (val < 20 ? 'var(--warning)' : 'inherit');
+        hardHTML += `<tr><td>${item}</td><td><input type="number" id="inv_hw_${item.replace(/\s+/g, '')}" value="${val}" style="color:${color}; font-weight:bold; width:100px;"></td></tr>`;
       });
       document.getElementById('invHardwareTable').innerHTML = hardHTML;
 
-      let preHTML = "<tr><th>Pre-Print Combo</th><th>Stock</th><th>Action</th></tr>";
+      let preHTML = "<tr><th>Exact Product Key</th><th>Stock</th><th>Action</th></tr>";
       Object.keys(inventory.preprints).forEach(item => {
         let val = inventory.preprints[item];
-        let color = val === 0 ? 'var(--danger)' : 'inherit';
+        let color = val <= 0 ? 'var(--danger)' : 'inherit';
         preHTML += `<tr>
-          <td>${item}</td>
+          <td style="font-family: monospace; font-size: 11px;">${item}</td>
           <td style="color:${color}; font-weight:bold;">${val}</td>
-          <td><button class="btn-danger" onclick="removePrePrint('${item}')">Remove</button></td>
+          <td><button class="btn-danger" onclick="removePrePrint('${encodeURIComponent(item)}')">Remove</button></td>
         </tr>`;
       });
       if(Object.keys(inventory.preprints).length === 0) preHTML += "<tr><td colspan='3'>No pre-printed stock.</td></tr>";
@@ -411,35 +491,51 @@
     }
 
     function saveFilaments() {
-      Object.keys(inventory.filaments).forEach(item => { inventory.filaments[item] = parseInt(document.getElementById('inv_' + item).value) || 0; });
-      Object.keys(inventory.hardware).forEach(item => { inventory.hardware[item] = parseInt(document.getElementById('inv_hw_' + item).value) || 0; });
+      Object.keys(inventory.filaments).forEach(item => { inventory.filaments[item] = parseInt(document.getElementById('inv_' + item.replace(/\s+/g, '')).value) || 0; });
+      Object.keys(inventory.hardware).forEach(item => { inventory.hardware[item] = parseInt(document.getElementById('inv_hw_' + item.replace(/\s+/g, '')).value) || 0; });
       
       alert("Raw materials updated in Cloud!");
       renderInventory();
-      syncCloudInventory(); // Backup to Sheets
+      updateDashboard(); // Updates alerts
+      syncCloudInventory(); 
     }
 
     function addPrePrint() {
-      let name = document.getElementById('addPreName').value.trim();
+      let cat = document.getElementById('addPreCat').value;
+      let baseCol = document.getElementById('addPreBaseColor').value;
+      let textCol = document.getElementById('addPreTextColor').value;
       let qty = parseInt(document.getElementById('addPreQty').value) || 0;
-      if(!name) return;
       
-      inventory.preprints[name] = (inventory.preprints[name] || 0) + qty;
-      document.getElementById('addPreName').value = "";
+      let specific = "";
+      let newKey = "";
+
+      if(cat === "Letter") {
+        specific = document.getElementById('addPreLetter').value;
+        newKey = getPrePrintKey("Letter", specific, baseCol, textCol);
+      } else {
+        specific = document.getElementById('addPreFlexiText').value.toUpperCase().trim();
+        if(!specific) return alert("Please enter the Flexi Toy Type.");
+        newKey = getPrePrintKey("Flexi", specific, baseCol, null);
+      }
       
+      inventory.preprints[newKey] = Math.max(0, (inventory.preprints[newKey] || 0) + qty);
+      
+      document.getElementById('addPreFlexiText').value = "";
       renderInventory();
-      syncCloudInventory(); // Backup to Sheets
+      updateDashboard(); // Updates alerts
+      syncCloudInventory(); 
     }
 
-    function removePrePrint(key) {
+    function removePrePrint(encodedKey) {
+      let key = decodeURIComponent(encodedKey);
       delete inventory.preprints[key];
       renderInventory();
-      syncCloudInventory(); // Backup to Sheets
+      updateDashboard(); // Updates alerts
+      syncCloudInventory();
     }
 
-
     // ==========================================
-    // 5. DASHBOARD & RECORDS
+    // 5. DASHBOARD, ALERTS & RECORDS
     // ==========================================
     function renderRecords() {
       let html = "";
@@ -447,7 +543,7 @@
         html += `<tr>
           <td><strong>${sale.date}</strong><br><small style="color:var(--text-muted)">${sale.week}</small></td>
           <td><span style="background:#e2e8f0; padding:4px 8px; border-radius:4px; font-size:12px;">${sale.category}</span></td>
-          <td>${sale.specific}</td>
+          <td style="font-family: monospace; font-size: 11px;">${sale.specific}</td>
           <td>${sale.qty}</td>
           <td style="color:var(--success); font-weight:bold;">₱${sale.revenue}</td>
         </tr>`;
@@ -456,6 +552,7 @@
     }
 
     function updateDashboard() {
+      // 1. Calculate Stats
       let today = new Date().toLocaleDateString();
       let salesToday = 0; let totalRev = 0;
       let letterCounts = {}; let weeklyRev = {};
@@ -463,9 +560,13 @@
       salesLog.forEach(sale => {
         totalRev += sale.revenue;
         if(sale.date === today) salesToday += sale.qty;
+        
         if(sale.category === "Letter") {
-          let letterChar = sale.specific.split(' ')[1]; 
-          letterCounts[letterChar] = (letterCounts[letterChar] || 0) + sale.qty;
+          let parts = sale.specific.split(':');
+          if(parts.length > 1) {
+            let letterChar = parts[1].trim().split(' ')[0]; 
+            letterCounts[letterChar] = (letterCounts[letterChar] || 0) + sale.qty;
+          }
         }
         weeklyRev[sale.week] = (weeklyRev[sale.week] || 0) + sale.revenue;
       });
@@ -473,13 +574,38 @@
       document.getElementById('dashSalesToday').innerText = salesToday;
       document.getElementById('dashRevenue').innerText = "₱" + totalRev;
 
+      // 2. Render Top 5 Letters
       let sortedLetters = Object.entries(letterCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
       let topHtml = "";
-      sortedLetters.forEach(item => { topHtml += `<li style="padding:10px 0; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between;">Letter ${item[0]} <span style="color:var(--primary); font-weight:bold;">${item[1]} sold</span></li>`; });
-      if(sortedLetters.length === 0) topHtml = "<li>No letters sold yet.</li>";
+      sortedLetters.forEach(item => { topHtml += `<li>Letter ${item[0]} <span style="color:var(--primary);">${item[1]} sold</span></li>`; });
+      if(sortedLetters.length === 0) topHtml = "<li><span style='color:var(--text-muted)'>No letters sold yet.</span></li>";
       document.getElementById('topLettersList').innerHTML = topHtml;
 
-      // Draw Graph
+      // 3. GENERATE RESTOCK ALERTS
+      let alertHtml = "";
+      
+      Object.keys(inventory.filaments).forEach(item => {
+        let val = inventory.filaments[item];
+        if(val <= 0) alertHtml += `<li>${item} <span style="color:var(--danger);">OUT OF STOCK (0g)</span></li>`;
+        else if(val < 300) alertHtml += `<li>${item} <span style="color:var(--warning);">Low (${val}g)</span></li>`;
+      });
+
+      Object.keys(inventory.hardware).forEach(item => {
+        let val = inventory.hardware[item];
+        if(val <= 0) alertHtml += `<li>${item} <span style="color:var(--danger);">OUT OF STOCK (0)</span></li>`;
+        else if(val < 20) alertHtml += `<li>${item} <span style="color:var(--warning);">Low (${val})</span></li>`;
+      });
+
+      Object.keys(inventory.preprints).forEach(item => {
+        if(inventory.preprints[item] <= 0) {
+          alertHtml += `<li><span style="font-family:monospace; font-size:10px;">${item}</span> <span style="color:var(--danger);">OUT OF STOCK</span></li>`;
+        }
+      });
+
+      if(alertHtml === "") alertHtml = `<li><span style="color:var(--success);">All stock levels are healthy!</span></li>`;
+      document.getElementById('restockList').innerHTML = alertHtml;
+
+      // 4. Draw Graph
       let ctx = document.getElementById('revenueChart').getContext('2d');
       if(revChart) revChart.destroy();
       let labels = Object.keys(weeklyRev);
@@ -495,7 +621,8 @@
 
     // FIRE IT UP
     window.onload = function() { 
-      loadCloudData(); // Reaches out to Google Sheets immediately on load
+      populateAZDropdowns();
+      loadCloudData(); 
     };
   </script>
 </body>
