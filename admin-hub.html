@@ -40,6 +40,8 @@
     .btn:hover { filter: brightness(1.1); }
     .btn-success { background: var(--success); width: 100%; padding: 14px;}
     .btn-danger { background: #fee2e2; color: var(--danger); padding: 6px 10px; font-size: 12px;}
+    .btn-warning { background: #fef3c7; color: var(--warning); padding: 6px 10px; font-size: 12px;}
+    .btn-action { padding: 6px 12px; font-size: 13px; margin-right: 4px; margin-bottom: 4px; display: inline-block;}
     
     .flex-row { display: flex; gap: 15px; }
     .flex-row > div { flex: 1; }
@@ -57,6 +59,16 @@
     #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
     @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
     @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+    /* Production Board CSS */
+    .kanban-board { display: flex; gap: 20px; align-items: flex-start; }
+    .kanban-col { flex: 1; background: #f1f5f9; border-radius: 12px; padding: 15px; border: 1px solid var(--border); }
+    .kanban-col h3 { text-align: center; padding-bottom: 10px; border-bottom: 2px solid var(--border); margin-top: 0;}
+    .ticket { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+    .ticket-header { font-weight: 900; font-size: 15px; color: var(--primary); margin-bottom: 5px; }
+    .ticket-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+    .ticket-details { font-family: monospace; font-size: 12px; background: #f8fafc; padding: 8px; border-radius: 4px; margin-bottom: 10px; white-space: pre-wrap; }
+    .ticket-actions { display: flex; flex-wrap: wrap; gap: 5px; }
   </style>
 </head>
 <body>
@@ -66,7 +78,8 @@
   <div class="sidebar">
     <h2>G3D COMMAND</h2>
     <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dashboard & Alerts</button>
-    <button class="nav-btn" onclick="switchTab('sales')">🛒 Point of Sale</button>
+    <button class="nav-btn" onclick="switchTab('orders')">🚀 Production Board</button>
+    <button class="nav-btn" onclick="switchTab('sales')">🛒 EOD Sales Log</button>
     <button class="nav-btn" onclick="switchTab('inventory')">📦 Inventory Manager</button>
     <button class="nav-btn" onclick="switchTab('records')">📅 Historical Records</button>
   </div>
@@ -103,8 +116,36 @@
       </div>
     </div>
 
+    <div id="orders" class="view">
+      <h1>Production Board Queue</h1>
+      <p style="font-size:14px; color:var(--text-muted); margin-top:-10px;">Move tickets to notify customers via email automatically.</p>
+      
+      <div class="kanban-board">
+        <div class="kanban-col">
+          <h3 style="color: var(--danger);">1. Pending Review</h3>
+          <div id="queuePending"></div>
+        </div>
+        <div class="kanban-col">
+          <h3 style="color: var(--warning);">2. In Production</h3>
+          <div id="queueProduction"></div>
+        </div>
+        <div class="kanban-col">
+          <h3 style="color: var(--success);">3. Ready / Finished</h3>
+          <div id="queueCompleted"></div>
+        </div>
+      </div>
+
+      <div class="card" style="border-left: 4px solid var(--danger); margin-top: 30px;">
+        <h3 style="color: var(--danger);">🚫 Flagged Fake / Scam Archive</h3>
+        <table id="scamOrdersTable">
+          <thead><tr><th>Customer Info</th><th>Order Details</th><th>Receipt</th><th>Actions</th></tr></thead>
+          <tbody id="scamOrdersBody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="sales" class="view">
-      <h1>Log a New Sale</h1>
+      <h1>End of Day Sales Log</h1>
       <div class="card" style="max-width: 600px;">
         <div class="form-group">
           <label>Product Category:</label>
@@ -164,22 +205,33 @@
           <div class="form-group"><label>Quantity:</label><input type="number" id="saleQty" value="1"></div>
         </div>
 
-        <button class="btn btn-success" onclick="processSale()">Record Sale & Deduct Materials</button>
+        <button class="btn btn-success" onclick="processSale()">Log Sale & Deduct Materials</button>
       </div>
     </div>
 
     <div id="inventory" class="view">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h1>Inventory Control</h1>
-        <button class="btn" onclick="saveFilaments()">💾 Save Filament Changes</button>
+        <button class="btn" onclick="saveFilaments()">💾 Save Inventory Changes</button>
       </div>
       
       <div class="grid" style="grid-template-columns: 1fr 1fr;">
         <div class="card">
           <h3>Raw Filament Stock (Grams)</h3>
           <table id="invFilamentTable"></table>
+          
           <h3 style="margin-top: 20px;">Hardware (Units)</h3>
           <table id="invHardwareTable"></table>
+          
+          <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border);">
+            <strong>➕ Register New Hardware Asset</strong>
+            <div class="flex-row" style="margin-top: 10px;">
+              <div class="form-group"><label>Asset Label Name</label><input type="text" id="newHwName" placeholder="e.g. Packaging Box"></div>
+              <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button class="btn" onclick="addHardwareAssetType()" style="width: 100%;">Add Row</button>
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="card">
@@ -245,19 +297,16 @@
     // ==========================================
     // 1. CLOUD CONNECTION & DATA SYNC
     // ==========================================
-    
-    // !!! PASTE YOUR APPS SCRIPT WEB APP URL BELOW !!!
     const API_URL = "https://script.google.com/macros/s/AKfycbzLnBL3Jqhry3Ucge-DwdIxD1X3aGrMGYITsNwMqqIllfPjQMukj1aV5DZ7Ar1CGEP9PA/exec";
-    
-    // THIS IS YOUR EXACT STOREFRONT SHEET1 CSV LINK (DO NOT CHANGE)
     const STOREFRONT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTOPhOugHaenJl1rv7FQ61TV85bXd1B69yG0x5NJc_r8_v4Yk3zscQYp3ChYYfoF2FBIjU8bXYYYh5i/pub?gid=0&single=true&output=csv";
 
-    // Globals dynamically loaded from Sheet1
     let activeColors = [];
     let activeFlexis = [];
 
-    let inventory = { filaments: {}, hardware: { "Keychain Rings": 100 }, preprints: {} };
+    // Added the requested initial hardware setup
+    let inventory = { filaments: {}, hardware: { "Keychain Rings": 100, "Plastic/Packaging": 100, "Freebies Sticker": 100 }, preprints: {} };
     let salesLog = [];
+    let incomingOrders = []; // New global for queue
     let revChart;
 
     function showToast(message) {
@@ -267,7 +316,6 @@
       setTimeout(function(){ toastEl.className = toastEl.className.replace("show", ""); }, 3500);
     }
 
-    // --- FETCH STOREFRONT DATA (SHEET1) ---
     async function fetchStoreDatabase() {
       try {
         let res = await fetch(STOREFRONT_CSV_URL);
@@ -291,7 +339,6 @@
       } catch(e) { console.error("Storefront DB sync failed", e); }
     }
 
-    // --- FETCH SALES & INVENTORY FROM APPS SCRIPT ---
     async function loadCloudData() {
       if(API_URL === "YOUR_WEB_APP_URL_HERE") { showToast("Please paste your Google Apps Script URL!"); return; }
       
@@ -301,48 +348,137 @@
         let data = await res.json();
         if (data.status === "success") {
           if (data.inventory) {
-             inventory.hardware = data.inventory.hardware || inventory.hardware;
-             inventory.preprints = data.inventory.preprints || inventory.preprints;
+             // Safe merge to prevent crashes
+             if (data.inventory.hardware) {
+                Object.keys(data.inventory.hardware).forEach(k => { inventory.hardware[k] = data.inventory.hardware[k]; });
+             }
+             if (data.inventory.preprints) inventory.preprints = data.inventory.preprints;
              
-             // Merge saved cloud filaments with the active colors from Sheet1
              if(data.inventory.filaments) {
-               Object.keys(data.inventory.filaments).forEach(k => {
-                 inventory.filaments[k] = data.inventory.filaments[k];
-               });
+               Object.keys(data.inventory.filaments).forEach(k => { inventory.filaments[k] = data.inventory.filaments[k]; });
              }
           }
           if (data.sales) salesLog = data.sales;
+          if (data.incomingOrders) incomingOrders = data.incomingOrders; // Load new orders
         }
       } catch(e) { console.error("Database sync failed.", e); }
       
-      // Ensure all Active colors from Sheet1 exist in inventory mapping (defaults to 0 if missing)
       activeColors.forEach(c => {
-        if(inventory.filaments[c] === undefined || isNaN(inventory.filaments[c])) {
-          inventory.filaments[c] = 0;
-        }
+        if(inventory.filaments[c] === undefined || isNaN(inventory.filaments[c])) { inventory.filaments[c] = 0; }
       });
 
       updateDashboard();
       renderInventory();
       renderRecords();
+      renderProductionBoard(); // Draw the kanban board
     }
 
     function syncCloudSale(newSale) { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_SALE", sale: newSale, inventory: inventory }) }); }
     function syncCloudInventory() { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_INVENTORY", inventory: inventory }) }); }
 
+    // ==========================================
+    // NEW: EMAIL & PRODUCTION BOARD LOGIC
+    // ==========================================
+    function sendCustomerEmail(email, subject, message) {
+      if(!email || email === "No Email") return;
+      fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SEND_EMAIL", email: email, subject: subject, message: message }) });
+    }
+
+    function changeTicketStatus(rowId, newStatus) {
+      let order = incomingOrders.find(o => o.rowId === rowId);
+      if(!order) return;
+
+      if(newStatus === "In Progress") {
+        let eta = prompt("Estimated processing time? (e.g. '2 hours', 'Tomorrow')\nThis updates the customer via email.");
+        if(!eta) return; 
+        order.status = newStatus;
+        let msg = `Hi ${order.name},\n\nYour order is verified and is now in production!\nEstimated completion: ${eta}.\n\nThank you for choosing G3D Studios!`;
+        sendCustomerEmail(order.email, "G3D Studios - Your Order is in Production 🛠️", msg);
+        showToast("Moved to Production & Emailed Customer!");
+      } 
+      else if (newStatus === "Completed") {
+        order.status = newStatus;
+        let actionMsg = (order.method && order.method.toLowerCase().includes("deliver")) ? "out for delivery" : "ready for pickup";
+        let msg = `Hi ${order.name},\n\nGreat news! Your order is finished and is now ${actionMsg}!\n\nThank you for choosing G3D Studios!`;
+        sendCustomerEmail(order.email, "G3D Studios - Your Order is Ready! 🎉", msg);
+        showToast("Order Completed & Emailed Customer!");
+      }
+      else if (newStatus === "DELETED") {
+        incomingOrders = incomingOrders.filter(o => o.rowId !== rowId);
+        showToast("Permanently Deleted.");
+      }
+      else {
+        order.status = newStatus;
+        showToast(`Moved to: ${newStatus}`);
+      }
+      
+      renderProductionBoard();
+      fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SET_ORDER_STATUS", rowId: rowId, status: newStatus }) });
+    }
+
+    function renderProductionBoard() {
+      let penHTML = ""; let proHTML = ""; let comHTML = ""; let scamHTML = "";
+      
+      incomingOrders.forEach(o => {
+        let ticketCard = `
+          <div class="ticket">
+            <div class="ticket-header">${o.name}</div>
+            <div class="ticket-meta">
+              📧 ${o.email || 'No email'}<br>
+              🚚 ${o.method || 'Standard'}<br>
+              <a href="${o.screenshot}" target="_blank" style="color:var(--primary);">View GCash Receipt</a>
+            </div>
+            <div class="ticket-details">${o.details}</div>
+            <div class="ticket-actions">
+        `;
+
+        if (o.status === "Pending" || o.status === "") {
+          penHTML += ticketCard + `
+              <button class="btn btn-action btn-success" onclick="changeTicketStatus(${o.rowId}, 'In Progress')">▶ Start Production</button>
+              <button class="btn btn-action btn-warning" onclick="changeTicketStatus(${o.rowId}, 'Fake/Scam')">⚠️ Flag Scam</button>
+            </div></div>`;
+        } 
+        else if (o.status === "In Progress") {
+          proHTML += ticketCard + `
+              <button class="btn btn-action btn-success" onclick="changeTicketStatus(${o.rowId}, 'Completed')">✔ Mark Finished</button>
+              <button class="btn btn-action" style="background:#e2e8f0; color:var(--text);" onclick="changeTicketStatus(${o.rowId}, 'Pending')">Back</button>
+            </div></div>`;
+        }
+        else if (o.status === "Completed") {
+          comHTML += ticketCard + `
+              <span style="color:var(--success); font-weight:bold; font-size:12px; padding:6px;">✓ Customer Notified</span>
+              <button class="btn btn-action btn-danger" style="background:none;" onclick="changeTicketStatus(${o.rowId}, 'DELETED')">Clear Ticket</button>
+            </div></div>`;
+        }
+        else if (o.status === "Fake/Scam") {
+          scamHTML += `<tr>
+            <td><strong>${o.name}</strong><br><small>${o.email}</small></td>
+            <td style="font-family: monospace; font-size:11px;">${o.details}</td>
+            <td><a href="${o.screenshot}" target="_blank">View Receipt</a></td>
+            <td>
+              <button class="btn btn-action" style="background:#e2e8f0; color:var(--text);" onclick="changeTicketStatus(${o.rowId}, 'Pending')">Restore</button>
+              <button class="btn btn-danger btn-action" style="background:none;" onclick="changeTicketStatus(${o.rowId}, 'DELETED')">Delete</button>
+            </td>
+          </tr>`;
+        }
+      });
+
+      document.getElementById('queuePending').innerHTML = penHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No pending orders.</p>";
+      document.getElementById('queueProduction').innerHTML = proHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>Printers are idle.</p>";
+      document.getElementById('queueCompleted').innerHTML = comHTML || "<p style='color:var(--text-muted); font-size:12px; text-align:center;'>No completed orders.</p>";
+      document.getElementById('scamOrdersBody').innerHTML = scamHTML || "<tr><td colspan='4' style='text-align:center; color:var(--text-muted);'>Archive is clean.</td></tr>";
+    }
 
     // ==========================================
     // 2. UI LOGIC & DYNAMIC DROPDOWNS
     // ==========================================
     function populateDynamicDropdowns() {
-      // 1. A-Z Letters
       let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
       let letterHTML = "";
       alphabet.forEach(l => { letterHTML += `<option value="${l}">${l}</option>`; });
       document.getElementById('saleLetterSelect').innerHTML = letterHTML;
       document.getElementById('addPreLetter').innerHTML = letterHTML;
 
-      // 2. Colors from Sheet1
       let colorHTML = "";
       activeColors.forEach(c => { colorHTML += `<option value="${c}">${c}</option>`; });
       
@@ -352,11 +488,9 @@
       document.getElementById('addPreBaseColor').innerHTML = colorHTML;
       document.getElementById('addPreTextColor').innerHTML = colorHTML;
 
-      // Make secondary default to red/different color if available
       let txtDrop = document.getElementById('saleTextColor');
       if(txtDrop.options.length > 2) txtDrop.selectedIndex = 2;
 
-      // 3. Flexis from Sheet1
       let flexiHTML = "";
       activeFlexis.forEach(f => { flexiHTML += `<option value="${f}">${f}</option>`; });
       document.getElementById('saleFlexiSelect').innerHTML = flexiHTML;
@@ -372,6 +506,7 @@
       if(tabId === 'dashboard') updateDashboard();
       if(tabId === 'inventory') renderInventory();
       if(tabId === 'records') renderRecords();
+      if(tabId === 'orders') renderProductionBoard();
     }
 
     function updatePosUI() {
@@ -426,6 +561,13 @@
       }
     }
 
+    // NEW: Safe Hardware Deductor
+    function safeDeductHardware(key, qty) {
+      if(inventory.hardware[key] !== undefined) {
+        inventory.hardware[key] = (parseInt(inventory.hardware[key]) || 0) - qty;
+      }
+    }
+
     // ==========================================
     // 3. CORE MATERIAL MATH & SALES LOGIC
     // ==========================================
@@ -464,7 +606,9 @@
           inventory.filaments[textCol] = (parseFloat(inventory.filaments[textCol]) || 0) - (1.5 * qty);
           showToast(`Sale Logged! Printed on demand and materials deducted.`);
         }
-        inventory.hardware["Keychain Rings"] = (parseInt(inventory.hardware["Keychain Rings"]) || 0) - qty;
+        safeDeductHardware("Keychain Rings", qty);
+        safeDeductHardware("Plastic/Packaging", qty);
+        safeDeductHardware("Freebies Sticker", qty);
       } 
       else if (cat === "Nameplate") {
         let prePrintKey = getPrePrintKey("Nameplate", specific, baseCol, textCol);
@@ -483,7 +627,7 @@
           inventory.filaments[textCol] = (parseFloat(inventory.filaments[textCol]) || 0) - textWeight;
           showToast(`Sale Logged! Printed on demand and materials deducted.`);
         }
-        inventory.hardware["Keychain Rings"] = (parseInt(inventory.hardware["Keychain Rings"]) || 0) - qty;
+        safeDeductHardware("Keychain Rings", qty);
       }
       else if (cat === "Flexi") {
         let prePrintKey = getPrePrintKey("Flexi", specific, baseCol, null);
@@ -532,13 +676,12 @@
     function renderInventory() {
       let filHTML = "<tr><th>Color</th><th>Grams Left</th><th>Potential Base Nameplates (16g)</th></tr>";
       
-      // We only render filaments that are marked as ACTIVE in Sheet1
       activeColors.forEach(item => {
         let val = parseFloat(inventory.filaments[item]) || 0;
         let color = val <= 0 ? 'var(--danger)' : (val < 300 ? 'var(--warning)' : 'inherit');
         let potentialPlates = Math.floor(val / 16);
         
-        // Using an ID safe for DOM without spaces
+        // Exact stable script ID logic
         let safeId = "inv_" + item.replace(/[^a-zA-Z0-9]/g, '');
         
         filHTML += `<tr>
@@ -582,10 +725,25 @@
         inventory.hardware[item] = parseInt(document.getElementById(safeId).value) || 0; 
       });
       
-      showToast("Raw materials updated in Cloud!");
+      showToast("Inventory updated in Cloud!");
       renderInventory();
       updateDashboard();
       syncCloudInventory(); 
+    }
+
+    // NEW: Add Custom Hardware
+    function addHardwareAssetType() {
+      let inputField = document.getElementById("newHwName");
+      let name = inputField.value.trim();
+      if(!name) { showToast("Please input a name."); return; }
+      if(inventory.hardware[name] !== undefined) { showToast("Asset already exists."); return; }
+      
+      inventory.hardware[name] = 0;
+      inputField.value = "";
+      renderInventory();
+      updateDashboard();
+      syncCloudInventory();
+      showToast(`Added: ${name}`);
     }
 
     function addPrePrint() {
@@ -605,7 +763,9 @@
         
         inventory.filaments[baseCol] = (parseFloat(inventory.filaments[baseCol]) || 0) - (2.5 * qty);
         inventory.filaments[textCol] = (parseFloat(inventory.filaments[textCol]) || 0) - (1.5 * qty);
-        inventory.hardware["Keychain Rings"] = (parseInt(inventory.hardware["Keychain Rings"]) || 0) - qty;
+        safeDeductHardware("Keychain Rings", qty);
+        safeDeductHardware("Plastic/Packaging", qty);
+        safeDeductHardware("Freebies Sticker", qty);
       } else {
         specific = document.getElementById('addPreFlexiSelect').value;
         newKey = getPrePrintKey("Flexi", specific, baseCol, null);
@@ -615,7 +775,7 @@
       
       inventory.preprints[newKey] = Math.max(0, (inventory.preprints[newKey] || 0) + qty);
       
-      showToast("Successfully added to Pre-Prints & deducted raw materials!");
+      showToast("Successfully added to Pre-Prints!");
       renderInventory();
       updateDashboard();
       syncCloudInventory(); 
@@ -663,7 +823,7 @@
           salesToday += sale.qty;
         }
         
-        if(sale.category === "Letter" && sale.specific.includes("Letter:")) {
+        if(sale.category === "Letter" && sale.specific && typeof sale.specific === 'string' && sale.specific.includes("Letter:")) {
           let parts = sale.specific.split(':');
           if(parts.length > 1) {
             let letterChar = parts[1].trim().split(' ')[0]; 
@@ -717,8 +877,8 @@
 
     // FIRE IT UP
     window.onload = async function() { 
-      await fetchStoreDatabase(); // 1. Pulls the Active Dropdown items from Sheet1
-      await loadCloudData();      // 2. Pulls the actual sales/stock from the Cloud Logic
+      await fetchStoreDatabase(); 
+      await loadCloudData(); 
     };
   </script>
 </body>
