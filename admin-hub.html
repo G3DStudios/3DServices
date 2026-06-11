@@ -65,7 +65,7 @@
     .kanban-col { flex: 1; background: #f1f5f9; border-radius: 12px; padding: 15px; border: 1px solid var(--border); }
     .kanban-col h3 { text-align: center; padding-bottom: 10px; border-bottom: 2px solid var(--border); margin-top: 0;}
     .ticket { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); }
-    .ticket-header { font-weight: 900; font-size: 15px; color: var(--primary); margin-bottom: 5px; white-space: pre-wrap;}
+    .ticket-header { font-weight: 900; font-size: 15px; color: var(--primary); margin-bottom: 5px; white-space: pre-wrap; line-height: 1.3;}
     .ticket-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
     .ticket-details { font-family: monospace; font-size: 12px; background: #f8fafc; padding: 8px; border-radius: 4px; margin-bottom: 10px; white-space: pre-wrap; }
     .ticket-actions { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -116,6 +116,7 @@
       </div>
     </div>
 
+    <!-- PRODUCTION BOARD QUEUE -->
     <div id="orders" class="view">
       <h1>Production Board Queue</h1>
       <p style="font-size:14px; color:var(--text-muted); margin-top:-10px;">Move tickets to notify customers via email automatically.</p>
@@ -305,7 +306,7 @@
 
     let inventory = { filaments: {}, hardware: { "Keychain Rings": 100, "Plastic/Packaging": 100, "Freebies Sticker": 100 }, preprints: {} };
     let salesLog = [];
-    let incomingOrders = []; // <-- INJECTED: This array catches the tickets from the cloud
+    let incomingOrders = []; // New array to hold Google Form submissions
     let revChart;
 
     function showToast(message) {
@@ -345,6 +346,9 @@
       try {
         let res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "LOAD" }) });
         let data = await res.json();
+        
+        console.log("Cloud Database Response:", data); // Saftey checker added!
+
         if (data.status === "success") {
           if (data.inventory) {
              inventory.hardware = data.inventory.hardware || inventory.hardware;
@@ -357,7 +361,7 @@
              }
           }
           if (data.sales) salesLog = data.sales;
-          if (data.incomingOrders) incomingOrders = data.incomingOrders; // <-- INJECTED: Loads the tickets into memory
+          if (data.incomingOrders) incomingOrders = data.incomingOrders; // Catch form submissions
         }
       } catch(e) { console.error("Database sync failed.", e); }
       
@@ -370,14 +374,14 @@
       updateDashboard();
       renderInventory();
       renderRecords();
-      renderProductionBoard(); // <-- INJECTED: Calls the function to draw the tickets
+      renderProductionBoard();
     }
 
     function syncCloudSale(newSale) { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_SALE", sale: newSale, inventory: inventory }) }); }
     function syncCloudInventory() { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SAVE_INVENTORY", inventory: inventory }) }); }
 
     // ==========================================
-    // NEW: TICKET STATUS CONTROLLER & RENDERING
+    // NEW: KITCHEN DISPLAY SYSTEM & EMAILS
     // ==========================================
     function sendCustomerEmail(email, subject, message) {
       if(!email || email === "No Email") return;
@@ -420,36 +424,39 @@
       let penHTML = ""; let proHTML = ""; let comHTML = ""; let scamHTML = "";
       
       incomingOrders.forEach(o => {
+        let currentStatus = String(o.status || "Pending").trim(); // Safety Trimmer!
+        
         let ticketCard = `
           <div class="ticket">
             <div class="ticket-header" style="white-space: pre-wrap;">${o.name}</div>
             <div class="ticket-meta">
               📧 ${o.email || 'No email'}<br>
-              <a href="${o.screenshot}" target="_blank" style="color:var(--primary); font-weight:bold;">View Receipt</a>
+              🚚 ${o.method || 'Standard'}<br>
+              <a href="${o.screenshot}" target="_blank" style="color:var(--primary); font-weight:bold;">View GCash Receipt</a>
             </div>
             <div class="ticket-details" style="white-space: pre-wrap;">${o.details}</div>
             <div class="ticket-actions">
         `;
 
-        if (o.status === "Pending" || o.status === "") {
+        if (currentStatus === "Pending" || currentStatus === "") {
           penHTML += ticketCard + `
               <button class="btn btn-action btn-success" onclick="changeTicketStatus(${o.rowId}, 'In Progress')">▶ Start Production</button>
               <button class="btn btn-action btn-warning" onclick="changeTicketStatus(${o.rowId}, 'Fake/Scam')">⚠️ Flag Scam</button>
             </div></div>`;
         } 
-        else if (o.status === "In Progress") {
+        else if (currentStatus === "In Progress") {
           proHTML += ticketCard + `
               <button class="btn btn-action btn-success" onclick="changeTicketStatus(${o.rowId}, 'Completed')">✔ Mark Finished</button>
               <button class="btn btn-action" style="background:#e2e8f0; color:var(--text);" onclick="changeTicketStatus(${o.rowId}, 'Pending')">Back</button>
             </div></div>`;
         }
-        else if (o.status === "Completed") {
+        else if (currentStatus === "Completed") {
           comHTML += ticketCard + `
               <span style="color:var(--success); font-weight:bold; font-size:12px; padding:6px;">✓ Customer Notified</span>
               <button class="btn btn-action btn-danger" style="background:none;" onclick="changeTicketStatus(${o.rowId}, 'DELETED')">Clear Ticket</button>
             </div></div>`;
         }
-        else if (o.status === "Fake/Scam") {
+        else if (currentStatus === "Fake/Scam") {
           scamHTML += `<tr>
             <td style="white-space: pre-wrap; font-size:12px;"><strong>${o.name}</strong><br><small>${o.email}</small></td>
             <td style="font-family: monospace; font-size:11px;">${o.details}</td>
