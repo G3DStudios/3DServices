@@ -1241,8 +1241,10 @@
 
     // --- PREVIEW LOGIC ---
     function updateSinglePreview() {
-      let letter = document.getElementById('singleInput').value.trim().toUpperCase();
+      // Allows standard letters, numbers, and symbols, but destroys fancy Unicode phone fonts
+      let letter = document.getElementById('singleInput').value.replace(/[^\x20-\x7E]/g, '').toUpperCase();
       document.getElementById('singleInput').value = letter; 
+      
       let bg = document.getElementById('singleBg').value;
       let fg = document.getElementById('singleFg').value;
       document.getElementById('singleInlayText').textContent = letter;
@@ -1265,8 +1267,10 @@
     }
 
     function updatePlatePreview() {
-      let text = document.getElementById('plateInput').value.trim().toUpperCase();
+      // The regex /[^\x20-\x7E]/g allows normal keyboard typing but blocks fancy phone fonts
+      let text = document.getElementById('plateInput').value.replace(/[^\x20-\x7E]/g, '').trim().toUpperCase();
       document.getElementById('plateInput').value = text;
+      
       let bg = document.getElementById('plateBg').value;
       let fg = document.getElementById('plateFg').value;
       document.getElementById('plateInlayText').textContent = text;
