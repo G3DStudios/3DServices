@@ -392,49 +392,19 @@
       let order = incomingOrders.find(o => o.rowId === rowId);
       if(!order) return;
 
-      // This intelligently extracts just the name, removing the "Name:" label and the fulfillment text
-      let cleanName = order.name.split('\n')[0].replace(/Name:/i, '').trim();
-
       if(newStatus === "In Progress") {
         let eta = prompt("Estimated processing time? (e.g. '2 hours', 'Tomorrow')\nThis updates the customer via email.");
         if(!eta) return; 
         order.status = newStatus;
-        
-        let msg = `Hi ${cleanName},\n\nYour order is verified and is now in production!\nEstimated completion: ${eta}.\n\nThank you for choosing G3D Studios!`;
-        
-        // Professional HTML Email Template
-        let htmlMsg = `
-          <div style="font-family: Arial, sans-serif; padding: 25px; border: 1px solid #e2e8f0; border-radius: 8px; max-width: 600px; background-color: #ffffff;">
-            <h2 style="color: #3b82f6; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Order in Production 🛠️</h2>
-            <p style="font-size: 16px; color: #1e293b;">Hi <strong>${cleanName}</strong>,</p>
-            <p style="font-size: 15px; color: #334155; line-height: 1.5;">Your payment transaction has been verified and your order is currently on the print beds!</p>
-            <div style="background-color: #f8fafc; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0; border-radius: 4px;">
-              <p style="margin: 0; font-size: 15px; color: #0f172a;"><strong>Estimated Completion:</strong> ${eta}</p>
-            </div>
-            <p style="font-size: 14px; color: #64748b; margin-top: 30px;">Thank you for choosing G3D Studios!</p>
-          </div>
-        `;
-
-        fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SEND_EMAIL", email: order.email, subject: "G3D Studios - Your Order is in Production 🛠️", message: msg, htmlMessage: htmlMsg }) });
+        let msg = `Hi ${order.name},\n\nYour order is verified and is now in production!\nEstimated completion: ${eta}.\n\nThank you for choosing G3D Studios!`;
+        sendCustomerEmail(order.email, "G3D Studios - Your Order is in Production 🛠️", msg);
         showToast("Moved to Production & Emailed Customer!");
       } 
       else if (newStatus === "Completed") {
         order.status = newStatus;
         let actionMsg = (order.method && order.method.toLowerCase().includes("deliver")) ? "out for delivery" : "ready for pickup";
-        
-        let msg = `Hi ${cleanName},\n\nGreat news! Your order is finished and is now ${actionMsg}!\n\nThank you for choosing G3D Studios!`;
-        
-        // Professional HTML Email Template
-        let htmlMsg = `
-          <div style="font-family: Arial, sans-serif; padding: 25px; border: 1px solid #e2e8f0; border-radius: 8px; max-width: 600px; background-color: #ffffff;">
-            <h2 style="color: #10b981; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Order Ready! 🎉</h2>
-            <p style="font-size: 16px; color: #1e293b;">Hi <strong>${cleanName}</strong>,</p>
-            <p style="font-size: 15px; color: #334155; line-height: 1.5;">Great news! Your 3D prints are completely finished and your package is now <strong>${actionMsg}</strong>.</p>
-            <p style="font-size: 14px; color: #64748b; margin-top: 30px;">Thank you for choosing G3D Studios!</p>
-          </div>
-        `;
-
-        fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "SEND_EMAIL", email: order.email, subject: "G3D Studios - Your Order is Ready! 🎉", message: msg, htmlMessage: htmlMsg }) });
+        let msg = `Hi ${order.name},\n\nGreat news! Your order is finished and is now ${actionMsg}!\n\nThank you for choosing G3D Studios!`;
+        sendCustomerEmail(order.email, "G3D Studios - Your Order is Ready! 🎉", msg);
         showToast("Order Completed & Emailed Customer!");
       }
       else if (newStatus === "DELETED") {
